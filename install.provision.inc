@@ -57,7 +57,9 @@ function drush_civicrm_provision_install($url = null) {
     }
     require_once "$civicrmInstallerHelper";
 
-    civicrm_source( $dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm.mysql' );
+    civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm.mysql');
+    civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_data.mysql');
+    civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_acl.mysql');
 
     drush_set_option('site_civicrm', TRUE, 'site'); // what for?
   }
