@@ -5,7 +5,7 @@
  */
 function drush_civicrm_pre_provision_install($url = NULL) {
   /*
-  if (PROVISION_CONTEXT_SITE) {
+  if (d()->type == 'site') {
     // if necessary ...
   }
   */
@@ -27,14 +27,39 @@ function drush_civicrm_provision_install($url = null) {
 
     drush_log(dt("Configuring site for civicrm support"));
 
-    drush_set_option('dbuser', drush_get_option('db_user', 'site'));
-    drush_set_option('dbpass', drush_get_option('db_passwd', 'site'));
-    drush_set_option('dbhost', drush_get_option('db_host', 'site'));
-    drush_set_option('dbname', drush_get_option('db_name', 'site'));
+    $db_user = drush_get_option('db_user', 'site');
+    $db_passwd = drush_get_option('db_passwd', 'site');
+    $db_host = drush_get_option('db_host', 'site');
+    $db_name = drush_get_option('db_name', 'site');
+
+    drush_set_option('dbuser', $db_user);
+    drush_set_option('dbpass', $db_passwd);
+    drush_set_option('dbhost', $db_host);
+    drush_set_option('dbname', $db_name);
 
     civicrm_pkg_install();
 
-    drush_set_option('site_civicrm', TRUE, 'site');
+    // Install the DB, not sure why the drush module is not doing it
+    global $crmPath;
+
+    $dsn = "mysql://{$db_user}:{$db_passwd}@{$db_host}/{$db_name}?new_link=true";
+    $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
+    $crmPath = $drupalRoot . '/sites/all/modules/civicrm'; // FIXME
+    $sqlPath = $crmPath . DIRECTORY_SEPARATOR . 'sql';
+
+    // include civicrm installer helper file (otherwise PEAR DB.php will fail to include parts)
+    $include_path = $crmPath . "/packages/:" . get_include_path( );
+    set_include_path( $include_path );
+
+    $civicrmInstallerHelper = $crmPath . "/install/civicrm.php";
+    if ( !file_exists($civicrmInstallerHelper) ) {
+        drush_die(dt("CiviCRM installer helper file is missing."));
+    }
+    require_once "$civicrmInstallerHelper";
+
+    civicrm_source( $dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm.mysql' );
+
+    drush_set_option('site_civicrm', TRUE, 'site'); // what for?
   }
 }
 
@@ -42,7 +67,7 @@ function drush_civicrm_provision_install($url = null) {
  * implementation of hook_provision_install
  */
 function drush_civicrm_post_provision_install($url = NULL) {
-  if (PROVISION_CONTEXT_SITE) {
+  if (d()->type == 'site') {
     drush_pm_enable('civicrm');
   }
 }
