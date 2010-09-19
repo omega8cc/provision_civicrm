@@ -186,8 +186,8 @@ function civicrm_pkg_install( ) {
     $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT'); // , FALSE);
     $modPath    = "$drupalRoot/$siteRoot/modules";
 
-drush_log(dt("test: " . $drupalRoot . ' -- ' . print_r($siteRoot, 1) . ' -- ' . $modPath));
-$modPath = "$drupalRoot/sites/all/modules";
+// drush_log(dt("test: " . $drupalRoot . ' -- ' . print_r($siteRoot, 1) . ' -- ' . $modPath));
+$modPath = "$drupalRoot/sites/all/modules"; // [ML]
 /*
 context -> alias['site_path']
 packages -> base['modules']['civicrm']['filename'] -> [..­]all/modules/civicrm/drupal/civicrm.module
@@ -199,8 +199,7 @@ packages -> base['modules']['civicrm']['filename'] -> [..­]all/modules/civicrm/
         
         // include civicrm installer helper file
         $civicrmInstallerHelper = "$drupalRoot/$siteRoot/modules/civicrm/install/civicrm.php";
-$civicrmInstallerHelper = "$drupalRoot/sites/all/modules/civicrm/install/civicrm.php";
-drush_log(dt("helper: " . $civicrmInstallerHelper));
+$civicrmInstallerHelper = "$drupalRoot/sites/all/modules/civicrm/install/civicrm.php"; // [ML]
         if ( !file_exists($civicrmInstallerHelper) ) {
             drush_die(dt("Tarfile could not be unpacked OR CiviCRM installer helper file is missing."));
         }
@@ -216,7 +215,7 @@ drush_log(dt("helper: " . $civicrmInstallerHelper));
         _civicrm_generate_settings_file($dbuser, $dbpass, $dbhost, $dbname);
 
 //        module_enable(array('CiviCRM'));
-# drush_module_enable(array('CiviCRM'));
+# drush_module_enable(array('CiviCRM')); // [ML]
 
         drush_log(dt("CiviCRM installed."), 'ok');
 /*
@@ -264,7 +263,7 @@ function _civicrm_create_files_dirs( ) {
 
     // include civicrm installer helper file
     $civicrmInstallerHelper = "$drupalRoot/$siteRoot/modules/civicrm/install/civicrm.php";
-$civicrmInstallerHelper = "$drupalRoot/sites/all/modules/civicrm/install/civicrm.php";
+$civicrmInstallerHelper = "$drupalRoot/sites/all/modules/civicrm/install/civicrm.php"; // [ML]
     if ( !file_exists($civicrmInstallerHelper) ) {
         drush_die(dt("CiviCRM installer helper file is missing."));
     }
@@ -273,11 +272,12 @@ $civicrmInstallerHelper = "$drupalRoot/sites/all/modules/civicrm/install/civicrm
     // create files/civicrm/* dirs
     global $crmPath;
     $crmPath = "$drupalRoot/$siteRoot/modules/civicrm";
-drush_log(dt('site root = ' . print_r(drush_get_context('alias'), 1)));
+// [ML]
+// drush_log(dt('site root = ' . print_r(drush_get_context('alias'), 1)));
 $site_alias_info = drush_get_context('alias');
 $siteRoot = $site_alias_info['site_path'];
 
-civicrm_setup("$siteRoot/files");
+civicrm_setup("$siteRoot/files"); // [ML]
 //    civicrm_setup("$drupalRoot/$siteRoot/files");
 }
 
@@ -285,7 +285,7 @@ civicrm_setup("$siteRoot/files");
 function _civicrm_generate_settings_file( $dbuser, $dbpass, $dbhost, $dbname ) {
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
     $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
-$siteRoot = 'sites/all';
+$siteRoot = 'sites/all'; // [ML]
     $crmPath    = "$drupalRoot/$siteRoot/modules/civicrm";
 
     $settingsTplFile = "$crmPath/templates/CRM/common/civicrm.settings.php.tpl";
