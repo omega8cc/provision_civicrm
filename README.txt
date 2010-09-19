@@ -17,8 +17,15 @@ directory. Verify the platform once the module has been added.
 When creating a new site, provision_civicrm will detect the presence
 of CiviCRM in the platform and will install/configure it automatically.
 
-Caveats
--------
+Todo
+----
 
-No code yet, it doesn't do anything.
+* site migration/cloning
+* civicrm upgrades
+* use Aegir variables in civicrm.settings.php so that the database
+  details are not readable by other users on the server (as is the
+  case in settings.php).
+* have a clean civicrm.drush.inc
+* reduce code redundancy in install.provision.inc
+* support for installing civicrm in a different DB?
 

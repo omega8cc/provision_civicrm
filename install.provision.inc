@@ -66,7 +66,7 @@ function drush_civicrm_provision_install($url = null) {
 }
 
 /**
- * implementation of hook_provision_install
+ * implementation of hook_post_provision_install
  */
 function drush_civicrm_post_provision_install($url = NULL) {
   if (d()->type == 'site') {
