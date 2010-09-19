@@ -285,8 +285,12 @@ civicrm_setup("$siteRoot/files"); // [ML]
 function _civicrm_generate_settings_file( $dbuser, $dbpass, $dbhost, $dbname ) {
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
     $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
-$siteRoot = 'sites/all'; // [ML]
-    $crmPath    = "$drupalRoot/$siteRoot/modules/civicrm";
+    // [ML] $crmPath    = "$drupalRoot/$siteRoot/modules/civicrm";
+    $crmPath    = "$drupalRoot/sites/all/modules/civicrm";
+
+// [ML]
+$site_alias_info = drush_get_context('alias');
+$siteRoot = $site_alias_info['site_path'];
 
     $settingsTplFile = "$crmPath/templates/CRM/common/civicrm.settings.php.tpl";
     if ( !file_exists($settingsTplFile) ) {
@@ -300,7 +304,7 @@ $siteRoot = 'sites/all'; // [ML]
     $db_spec = _drush_sql_get_db_spec();
     $params  = array(
                      'crmRoot'   => $crmPath,
-                     'templateCompileDir' => "$drupalRoot/$siteRoot/files/civicrm/templates_c",
+                     'templateCompileDir' => "$siteRoot/files/civicrm/templates_c", // [ML] removed $drupalRoot
                      'frontEnd'  => 0,
                      'cms'       => 'Drupal',
                      'baseURL'   => $baseUrl,
@@ -319,9 +323,9 @@ $siteRoot = 'sites/all'; // [ML]
     } 
     $str = trim( $str );
 
-    $configFile = "$drupalRoot/$siteRoot/civicrm.settings.php";
+    $configFile = "$siteRoot/civicrm.settings.php"; // [ML] removed $drupalRoot
     civicrm_write_file( $configFile, $str );
-    drush_log(dt("Settings file generated."), 'ok');
+    drush_log(dt("Settings file generated: $configFile"), 'ok');
 }
 
 /**
