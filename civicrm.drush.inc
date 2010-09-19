@@ -1,7 +1,7 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 3.1                                                |
+ | CiviCRM version 3.2                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2010                                |
  +--------------------------------------------------------------------+
@@ -67,7 +67,7 @@ function civicrm_drush_command() {
 
     // the key in the $items array is the name of the command.
     $items['civicrm-install'] = 
-        array('callback'    => 'drush_civicrm_install',
+        array('callback'    => 'civicrm_pkg_install',
               'description' => "Install a new instance of CiviCRM.",
               'options'     =>
                 array('--dbuser'    => 'MySQL username for your Drupal/CiviCRM database.',
@@ -168,78 +168,160 @@ function civicrm_drush_command() {
     return $items;
 }
 
-function drush_civicrm_install($dbuser,$dbpass,$dbhost,$dbname,$tarfile) {
-    global $crmPath, $sqlPath, $cmsPath;
-    
-    if (!isset( $dbuser )) {
-        $dbuser = drush_get_option('dbuser', false);
-    }
-    if ( !$dbuser ) {
+function civicrm_pkg_install( ) {
+    if ( !$dbuser = drush_get_option('dbuser', false) ) {
         drush_die(dt('CiviCRM database username not specified.'));
     }
-    if (!isset( $dbpass )) {
-        $dbpass = drush_get_option('dbpass', false);
-    }
-    if ( !$dbpass ) {
+    if ( !$dbpass = drush_get_option('dbpass', false) ) {
         drush_die(dt('CiviCRM database password not specified.'));
     }
-    if (!isset( $dbhost )) {
-        $dbhost = drush_get_option('dbhost', false);
-    }
-    if ( !$dbhost ) {
+    if ( !$dbhost = drush_get_option('dbhost', false) ) {
         drush_die(dt('CiviCRM database host not specified.'));
     }
-    if (!isset( $dbname )) {
-        $dbname = drush_get_option('dbname', false);
-    }
-    if ( !$dbname ) {
+    if ( !$dbname = drush_get_option('dbname', false) ) {
         drush_die(dt('CiviCRM database name not specified.'));
     }
-    if (!isset( $tarfile )) {
-        $tarfile = drush_get_option('tarfile');
+
+    $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
+    $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT'); // , FALSE);
+    $modPath    = "$drupalRoot/$siteRoot/modules";
+
+drush_log(dt("test: " . $drupalRoot . ' -- ' . print_r($siteRoot, 1) . ' -- ' . $modPath));
+$modPath = "$drupalRoot/sites/all/modules";
+/*
+context -> alias['site_path']
+packages -> base['modules']['civicrm']['filename'] -> [..­]all/modules/civicrm/drupal/civicrm.module
+*/
+
+  #  if ( !is_dir( "$modPath/civicrm" ) ) {
+        // extract tarfile at right place
+  #      _civicrm_extract_tarfile( $modPath );
+        
+        // include civicrm installer helper file
+        $civicrmInstallerHelper = "$drupalRoot/$siteRoot/modules/civicrm/install/civicrm.php";
+$civicrmInstallerHelper = "$drupalRoot/sites/all/modules/civicrm/install/civicrm.php";
+drush_log(dt("helper: " . $civicrmInstallerHelper));
+        if ( !file_exists($civicrmInstallerHelper) ) {
+            drush_die(dt("Tarfile could not be unpacked OR CiviCRM installer helper file is missing."));
+        }
+        drush_log(dt("Tarfile unpacked."), 'ok');
+
+        // setup all required files/civicrm/* directories
+        _civicrm_create_files_dirs( );
+
+        // install database
+        //_civicrm_install_db($dbuser, $dbpass, $dbhost, $dbname);
+
+        // generate civicrm.settings.php file
+        _civicrm_generate_settings_file($dbuser, $dbpass, $dbhost, $dbname);
+
+//        module_enable(array('CiviCRM'));
+# drush_module_enable(array('CiviCRM'));
+
+        drush_log(dt("CiviCRM installed."), 'ok');
+/*
+    } else {
+        drush_log(dt("Existing CiviCRM found. No action taken."), 'ok');
     }
-    // installer global'izes this variable
-    $crmPath = drush_get_context('DRUSH_DRUPAL_ROOT')."/sites/all/modules";
-    if ( !is_dir( $crmPath.'/civicrm' ) && !$tarfile ) {
+*/
+}
+
+function _civicrm_extract_tarfile( $destinationPath, $option = 'tarfile' ) {
+    if ( !$tarfile = drush_get_option($option, false) ) {
         drush_die(dt('CiviCRM tarfile not specified.'));
     }
-    //FIXME: throw error if tarfile is not in a valid format.
-    
-    $step = '1';
-    
-    // Decompress / untar CiviCRM if necessary
-    drush_log(dt($step++ . ". Checking for existing CiviCRM."), 'ok');
-    if ( !is_dir($crmPath.'/civicrm') ) {
-        drush_log(dt($step++ . ". Unpacking tarfile"), 'ok');
-        drush_shell_exec("gzip -d " . $tarfile);
+    $tarpath = $tarfile;
+    if ( drush_shell_exec("gzip -d " . $tarfile) ) {
         $tarpath = substr($tarfile, 0, strlen($tarfile)-3);
-        drush_shell_exec("tar -xf $tarpath -C \"$crmPath\"");
-        drush_log(dt($step++ . ". Tarfile unpacked."), 'ok');
-    } else {
-        drush_log(dt($step++ . ". Existing CiviCRM found."), 'ok');
     }
-    $crmPath .= '/civicrm';
-    
-    // Configure the CiviCRM installer
-    drush_log(dt($step++ . ". Setting up CiviCRM configuration."), 'ok');
-    require_once "$crmPath/install/civicrm.php";
-    define(DIRECTORY_SEPARATOR, '/');
-    // installer global'izes these variables
-    $sqlPath = "$crmPath/sql";
-    $cmsPath = drush_get_context('DRUSH_DRUPAL_ROOT');
-    $dbConfig = array('username' => $dbuser, 'password' => $dbpass,
-                      'server' => $dbhost, 'database' => $dbname,
+    drush_shell_exec("tar -xf $tarpath -C \"$destinationPath\"");
+}
+
+function _civicrm_install_db( $dbuser, $dbpass, $dbhost, $dbname ) {
+    $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
+    $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
+    $sqlPath    = "$drupalRoot/$siteRoot/modules/civicrm/sql";
+
+    $conn = @mysql_connect($dbhost, $dbuser, $dbpass);
+    if( !@mysql_select_db($dbname) && 
+        !@mysql_query("CREATE DATABASE $database") ) {
+        drush_die(dt('CiviCRM database was not found. Failed to create one.'));
+    }
+
+    // setup database with civicrm structure and data
+    $dsn = "mysql://{$dbuser}:{$dbpass}@{$dbhost}/{$dbname}?new_link=true";
+    drush_print(dt("Loading CiviCRM database structure .."));
+    civicrm_source($dsn, $sqlPath . '/civicrm.mysql'   );
+    drush_print(dt("Loading CiviCRM database with required data .."));
+    civicrm_source($dsn, $sqlPath . '/civicrm_data.mysql');
+    civicrm_source($dsn, $sqlPath . '/civicrm_acl.mysql' );
+    drush_log(dt("CiviCRM database loaded successfully."), 'ok');
+}
+
+function _civicrm_create_files_dirs( ) {
+    $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT' );
+    $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE );
+
+    // include civicrm installer helper file
+    $civicrmInstallerHelper = "$drupalRoot/$siteRoot/modules/civicrm/install/civicrm.php";
+$civicrmInstallerHelper = "$drupalRoot/sites/all/modules/civicrm/install/civicrm.php";
+    if ( !file_exists($civicrmInstallerHelper) ) {
+        drush_die(dt("CiviCRM installer helper file is missing."));
+    }
+    require_once "$civicrmInstallerHelper";
+
+    // create files/civicrm/* dirs
+    global $crmPath;
+    $crmPath = "$drupalRoot/$siteRoot/modules/civicrm";
+drush_log(dt('site root = ' . print_r(drush_get_context('alias'), 1)));
+$site_alias_info = drush_get_context('alias');
+$siteRoot = $site_alias_info['site_path'];
+
+civicrm_setup("$siteRoot/files");
+//    civicrm_setup("$drupalRoot/$siteRoot/files");
+}
+
+// generates civicrm.settings.php file
+function _civicrm_generate_settings_file( $dbuser, $dbpass, $dbhost, $dbname ) {
+    $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
+    $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
+$siteRoot = 'sites/all';
+    $crmPath    = "$drupalRoot/$siteRoot/modules/civicrm";
+
+    $settingsTplFile = "$crmPath/templates/CRM/common/civicrm.settings.php.tpl";
+    if ( !file_exists($settingsTplFile) ) {
+        drush_die(dt("Could not find CiviCRM settings template and therefore could not create settings file."));
+    }
+
+    drush_print(dt("Generating civicrm settings file .."));
+    $baseUrl = drush_get_option('site_url', false);
+    $baseUrl = !$baseUrl ? ($GLOBALS['base_url']) : ('http://' . $baseUrl);
+
+    $db_spec = _drush_sql_get_db_spec();
+    $params  = array(
+                     'crmRoot'   => $crmPath,
+                     'templateCompileDir' => "$drupalRoot/$siteRoot/files/civicrm/templates_c",
+                     'frontEnd'  => 0,
+                     'cms'       => 'Drupal',
+                     'baseURL'   => $baseUrl,
+                     'dbUser'    => $dbuser,
+                     'dbPass'    => $dbpass,
+                     'dbHost'    => $dbhost,
+                     'dbName'    => $dbname,
+                     'CMSdbUser' => $db_spec['username'],
+                     'CMSdbPass' => $db_spec['password'],
+                     'CMSdbHost' => $db_spec['host'],
+                     'CMSdbName' => $db_spec['database'],
                      );
-    $config = array('site_dir' => drush_get_option('site_url'),
-                    'base_url' => 'http://'. drush_get_option('site_url'),
-                    'mysql'    => $dbConfig,
-                    'drupal'   => $dbConfig,
-                   );
-    
-    // Run the installer
-    drush_log(dt($step++ . ". Installing CiviCRM."), 'ok');
-    civicrm_main( $config );
-    drush_log(dt($step++ . ". CiviCRM installed. Enable the module in Drupal."), 'ok');
+    $str = file_get_contents( $settingsTplFile );
+    foreach ( $params as $key => $value ) { 
+        $str = str_replace( '%%' . $key . '%%', $value, $str ); 
+    } 
+    $str = trim( $str );
+
+    $configFile = "$drupalRoot/$siteRoot/civicrm.settings.php";
+    civicrm_write_file( $configFile, $str );
+    drush_log(dt("Settings file generated."), 'ok');
 }
 
 /**
