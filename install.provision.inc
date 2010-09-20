@@ -61,7 +61,8 @@ function drush_civicrm_provision_install($url = null) {
     civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_data.mysql');
     civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_acl.mysql');
 
-    drush_set_option('site_civicrm', TRUE, 'site'); // what for?
+    // for .drushrc, will be checked when verify is run
+    drush_set_option('site_civicrm', TRUE, 'site');
   }
 }
 
