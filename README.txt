@@ -20,7 +20,8 @@ of CiviCRM in the platform and will install/configure it automatically.
 Todo
 ----
 
-* site migration/cloning
+* site migration/verify
+* generate a CiviCRM site key in civicrm.settings.php
 * civicrm upgrades
 * use Aegir variables in civicrm.settings.php so that the database
   details are not readable by other users on the server (as is the
