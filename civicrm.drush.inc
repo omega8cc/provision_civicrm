@@ -452,7 +452,9 @@ function civicrm_cache_clear() {
     $config =& CRM_Core_Config::singleton( );
     $config->cleanup( 1 , false );
 
-    drush_log(dt('Cache cleared.'), 'ok');
+    @unlink($config->configAndLogDir . '/Config.IDS.ini'); // [ML]
+
+    drush_log(dt('CiviCRM Cache cleared.'), 'ok');
 }
 
 function civicrm_upgrade() {
