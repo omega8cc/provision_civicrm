@@ -282,7 +282,7 @@ civicrm_setup("$siteRoot/files"); // [ML]
 }
 
 // generates civicrm.settings.php file
-function _civicrm_generate_settings_file( $dbuser, $dbpass, $dbhost, $dbname ) {
+function _civicrm_generate_settings_file( $dbuser, $dbpass, $dbhost, $dbname, $sitekey = NULL ) {
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
     $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
     // [ML] $crmPath    = "$drupalRoot/$siteRoot/modules/civicrm";
@@ -292,7 +292,10 @@ function _civicrm_generate_settings_file( $dbuser, $dbpass, $dbhost, $dbname ) {
 $site_alias_info = drush_get_context('alias');
 $siteRoot = $site_alias_info['site_path'];
 
-    $settingsTplFile = "$crmPath/templates/CRM/common/civicrm.settings.php.tpl";
+    # [ML] CRM-7416 : the tpl of civicrm does not have a variable for the siteKey
+    # [ML] $settingsTplFile = "$crmPath/templates/CRM/common/civicrm.settings.php.tpl";
+    $settingsTplFile = dirname(__FILE__) . "/civicrm.settings.php.tpl";
+
     if ( !file_exists($settingsTplFile) ) {
         drush_die(dt("Could not find CiviCRM settings template and therefore could not create settings file."));
     }
@@ -316,6 +319,7 @@ $siteRoot = $site_alias_info['site_path'];
                      'CMSdbPass' => $db_spec['password'],
                      'CMSdbHost' => $db_spec['host'],
                      'CMSdbName' => $db_spec['database'],
+                     'siteKey'   => $sitekey,
                      );
     $str = file_get_contents( $settingsTplFile );
     foreach ( $params as $key => $value ) { 
