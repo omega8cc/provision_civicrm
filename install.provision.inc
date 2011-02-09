@@ -71,6 +71,10 @@ function drush_civicrm_provision_install($url = null) {
  */
 function drush_civicrm_post_provision_install($url = NULL) {
   if (d()->type == 'site') {
-    drush_pm_enable('civicrm');
+    $packages = drush_get_option('packages', 'platform');
+
+    if (array_key_exists('civicrm', $packages['base']['modules'])) {
+      drush_pm_enable('civicrm');
+    }
   }
 }

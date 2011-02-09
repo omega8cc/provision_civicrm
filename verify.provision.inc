@@ -61,7 +61,8 @@ function drush_civicrm_post_provision_verify($url = NULL) {
 
     $civicrmInstallerHelper = $crmPath . "/install/civicrm.php";
     if ( !file_exists($civicrmInstallerHelper) ) {
-        drush_die(dt("CiviCRM installer helper file is missing."));
+        drush_log(dt("CiviCRM installer helper file is missing."));
+        return;
     }
     require_once "$civicrmInstallerHelper";
 
@@ -76,13 +77,6 @@ function drush_civicrm_post_provision_verify($url = NULL) {
 
     civicrm_config_update();
     drush_log(dt("CiviCRM: domain and directory paths updated"));
-
-# [ML] is it necessary? working?
-#      we should probably instead really enforce strict settings for those
-#      paths/URLs during installation.
-#    $params = array('directory' => drush_get_context('DRUSH_DRUPAL_ROOT'), 'url' => 'http://' . drush_get_option('uri'));
-#    require_once $crmPath . '/CRM/Core/BAO/Preferences.php';
-#    CRM_Core_BAO_Preferences::fixAndStoreDirAndURL( $params );
 
     civicrm_cache_clear();
 
