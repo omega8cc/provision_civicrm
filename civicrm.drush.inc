@@ -186,6 +186,9 @@ function civicrm_pkg_install( ) {
     $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT'); // , FALSE);
     $modPath    = "$drupalRoot/$siteRoot/modules";
 
+    # [ML]
+    $sitekey = md5(uniqid( '', true ) . $siteRoot);
+
 // drush_log(dt("test: " . $drupalRoot . ' -- ' . print_r($siteRoot, 1) . ' -- ' . $modPath));
 $modPath = "$drupalRoot/sites/all/modules"; // [ML]
 /*
@@ -212,7 +215,7 @@ $civicrmInstallerHelper = "$drupalRoot/sites/all/modules/civicrm/install/civicrm
         //_civicrm_install_db($dbuser, $dbpass, $dbhost, $dbname);
 
         // generate civicrm.settings.php file
-        _civicrm_generate_settings_file($dbuser, $dbpass, $dbhost, $dbname);
+        _civicrm_generate_settings_file($dbuser, $dbpass, $dbhost, $dbname, $sitekey);
 
 //        module_enable(array('CiviCRM'));
 # drush_module_enable(array('CiviCRM')); // [ML]
