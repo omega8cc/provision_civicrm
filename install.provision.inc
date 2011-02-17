@@ -37,6 +37,7 @@ function drush_civicrm_provision_install($url = null) {
     drush_set_option('dbhost', $db_host);
     drush_set_option('dbname', $db_name);
 
+    // Generates the civicrm.settings.php
     civicrm_pkg_install();
 
     // Install the DB, not sure why the drush module is not doing it
@@ -71,6 +72,9 @@ function drush_civicrm_provision_install($url = null) {
  */
 function drush_civicrm_post_provision_install($url = NULL) {
   if (d()->type == 'site') {
+    // Check if the CiviCRM code base is present in the platform
+    // Note: after putting the code there, you need to verify
+    // the platform.
     $packages = drush_get_option('packages', 'platform');
 
     if (array_key_exists('civicrm', $packages['base']['modules'])) {
