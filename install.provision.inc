@@ -12,9 +12,9 @@ function drush_civicrm_pre_provision_install($url = NULL) {
 }
 
 /**
- * implementation of hook_provision_install
+ * implementation of hook_post_provision_install
  */
-function drush_civicrm_provision_install($url = null) {
+function drush_civicrm_post_provision_install($url = null) {
   if (d()->type == 'site') {
     // Check if the CiviCRM code base is present in the platform
     // Note: after putting the code there, you need to verify
@@ -62,23 +62,6 @@ function drush_civicrm_provision_install($url = null) {
     civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_data.mysql');
     civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_acl.mysql');
 
-    // for .drushrc, will be checked when verify is run
-    drush_set_option('site_civicrm', TRUE, 'site');
-  }
-}
-
-/**
- * implementation of hook_post_provision_install
- */
-function drush_civicrm_post_provision_install($url = NULL) {
-  if (d()->type == 'site') {
-    // Check if the CiviCRM code base is present in the platform
-    // Note: after putting the code there, you need to verify
-    // the platform.
-    $packages = drush_get_option('packages', 'platform');
-
-    if (array_key_exists('civicrm', $packages['base']['modules'])) {
-      drush_pm_enable('civicrm');
-    }
+    drush_pm_enable('civicrm');
   }
 }
