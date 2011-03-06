@@ -169,13 +169,13 @@ function civicrm_drush_command() {
         array('callback'    => 'civicrm_sql_cli',
               'description' => "Open a SQL command-line interface using CiviCRM's credentials.",
               );
-    $items['civicrm-civimail-cron'] = 
+    $items['civicrm-civimail'] = 
         array('callback'    => 'drush_civicrm_civimail_cron',
               'description' => "Run the CiviMail cron.",
               );
-    $items['civicrm-updatemembershiprecord-cron'] = 
+    $items['civicrm-member-records'] = 
         array('callback'    => 'drush_civicrm_updatemembershiprecord_cron',
-              'description' => "Run the CiviMember UpdateMembershipRecord cron.",
+              'description' => "Run the CiviMember UpdateMembershipRecord cron (civicrm-member-records).",
               );
 
     return $items;
