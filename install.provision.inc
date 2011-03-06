@@ -68,10 +68,7 @@ function drush_civicrm_post_provision_install($url = null) {
     civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_acl.mysql');
 
     // Create a civicron user and role
-    $url = $GLOBALS['base_url'];
-    if (preg_match('/https?:\/\/(.*)/', $url, $matches)) {
-      $url = $matches[1];
-    }
+    $url = drush_get_option('uri', false);
 
     $civicron_cronpassword = md5(uniqid(rand(), true));
 
