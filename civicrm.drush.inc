@@ -1,7 +1,7 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 3.2                                                |
+ | CiviCRM version 3.3                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2010                                |
  +--------------------------------------------------------------------+
@@ -70,13 +70,14 @@ function civicrm_drush_command() {
         array('callback'    => 'civicrm_pkg_install',
               'description' => "Install a new instance of CiviCRM.",
               'options'     =>
-                array('--dbuser'    => 'MySQL username for your Drupal/CiviCRM database.',
-                      '--dbpass'    => 'MySQL password for your Drupal/CiviCRM database.',
-                      '--dbhost'    => 'MySQL host for your Drupal/CiviCRM database. Defaults to localhost.',
-                      '--dbname'    => 'MySQL database name of your Drupal/CiviCRM database.',
-                      '--tarfile'   => 'Path to your CiviCRM tar.gz file.',
-                     ),
-             );
+                array('--dbuser'      => 'MySQL username for your Drupal/CiviCRM database.',
+                      '--dbpass'      => 'MySQL password for your Drupal/CiviCRM database.',
+                      '--dbhost'      => 'MySQL host for your Drupal/CiviCRM database. Defaults to localhost.',
+                      '--dbname'      => 'MySQL database name of your Drupal/CiviCRM database.',
+                      '--tarfile'     => 'Path to your CiviCRM tar.gz file.',
+                      '--destination' => 'Destination modules path to extract CiviCRM (eg : sites/all/modules ).',
+                      ),
+              );
     $items['civicrm-upgrade-db']  = 
         array('callback'    => 'civicrm_upgrade_db',
               'description' => "Execute the civicrm/upgrade?reset=1 process from the command line.",
@@ -91,7 +92,11 @@ function civicrm_drush_command() {
               );
     $items['civicrm-cache-clear'] = 
         array('callback'    => 'civicrm_cache_clear',
-              'description' => "Clear all CiviCRM database and smarty caches.",
+              'description' => "Clear all CiviCRM database and smarty caches and session.",
+              );
+    $items['civicrm-enable-debug'] = 
+        array('callback'    => 'civicrm_enable_debug',
+              'description' => "Enable CiviCRM Debugging.",
               );
     $items['civicrm-upgrade']  = 
         array('callback'    => 'civicrm_upgrade',
@@ -165,11 +170,11 @@ function civicrm_drush_command() {
               'description' => "Open a SQL command-line interface using CiviCRM's credentials.",
               );
     $items['civicrm-civimail-cron'] = 
-        array('callback'    => 'civicrm_civimail_cron',
+        array('callback'    => 'drush_civicrm_civimail_cron',
               'description' => "Run the CiviMail cron.",
               );
     $items['civicrm-updatemembershiprecord-cron'] = 
-        array('callback'    => 'civicrm_updatemembershiprecord_cron',
+        array('callback'    => 'drush_civicrm_updatemembershiprecord_cron',
               'description' => "Run the CiviMember UpdateMembershipRecord cron.",
               );
 
@@ -252,14 +257,14 @@ function _civicrm_extract_tarfile( $destinationPath, $option = 'tarfile' ) {
 function _civicrm_install_db( $dbuser, $dbpass, $dbhost, $dbname ) {
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
     $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
+    
     $sqlPath    = "$drupalRoot/$siteRoot/modules/civicrm/sql";
-
     $conn = @mysql_connect($dbhost, $dbuser, $dbpass);
     if( !@mysql_select_db($dbname) && 
         !@mysql_query("CREATE DATABASE $database") ) {
         drush_die(dt('CiviCRM database was not found. Failed to create one.'));
     }
-
+    
     // setup database with civicrm structure and data
     $dsn = "mysql://{$dbuser}:{$dbpass}@{$dbhost}/{$dbname}?new_link=true";
     drush_print(dt("Loading CiviCRM database structure .."));
@@ -273,7 +278,7 @@ function _civicrm_install_db( $dbuser, $dbpass, $dbhost, $dbname ) {
 function _civicrm_create_files_dirs( ) {
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT' );
     $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE );
-
+    
     // include civicrm installer helper file
     $civicrmInstallerHelper = "$drupalRoot/$siteRoot/modules/civicrm/install/civicrm.php";
 $civicrmInstallerHelper = "$drupalRoot/sites/all/modules/civicrm/install/civicrm.php"; // [ML]
@@ -281,7 +286,7 @@ $civicrmInstallerHelper = "$drupalRoot/sites/all/modules/civicrm/install/civicrm
         drush_die(dt("CiviCRM installer helper file is missing."));
     }
     require_once "$civicrmInstallerHelper";
-
+    
     // create files/civicrm/* dirs
     global $crmPath;
     $crmPath = "$drupalRoot/$siteRoot/modules/civicrm";
@@ -316,7 +321,7 @@ $siteRoot = $site_alias_info['site_path'];
     drush_print(dt("Generating civicrm settings file .."));
     $baseUrl = drush_get_option('site_url', false);
     $baseUrl = !$baseUrl ? ($GLOBALS['base_url']) : ('http://' . $baseUrl);
-
+    
     $db_spec = _drush_sql_get_db_spec();
     $params  = array(
                      'crmRoot'   => $crmPath,
@@ -398,6 +403,8 @@ function civicrm_drush_help($section) {
 function civicrm_upgrade_db() {
     _civicrm_init();
 
+    $_POST['upgrade'] = 1;
+    $_GET['q'] = 'civicrm/upgrade';
     require_once 'CRM/Core/Config.php';
     require_once 'CRM/Core/Smarty.php';
     $template =& CRM_Core_Smarty::singleton( );
@@ -421,7 +428,6 @@ function civicrm_upgrade_db() {
         drush_print(dt("Starting with upgrade .."));
     }
 
-    $_POST['upgrade'] = 1;
     require_once( 'CRM/Upgrade/Page/Upgrade.php' );
     $upgrade =& new CRM_Upgrade_Page_Upgrade( );
     ob_start(); // to suppress html output /w source code.
@@ -469,10 +475,25 @@ function civicrm_cache_clear() {
     $config =& CRM_Core_Config::singleton( );
     $config->cleanup( 1 , false );
 
-    @unlink($config->configAndLogDir . '/Config.IDS.ini'); // [ML]
+    // also cleanup the session object
+    $session =& CRM_Core_Session::singleton( );
+    $session->reset(1);
 
-    drush_log(dt('CiviCRM Cache cleared.'), 'ok');
+    drush_log(dt('Cache cleared.'), 'ok');
 }
+
+function civicrm_enable_debug( ) {
+    _civicrm_init();
+
+    $params['debug'] = 1;
+    $params['backtrace'] = 1;
+
+    require_once 'CRM/Admin/Form/Setting.php';
+    CRM_Admin_Form_Setting::commonProcess( $params );
+
+    drush_log(dt('Debug setting enabled.'), 'ok');
+}
+
 
 function civicrm_upgrade() {
     $tarfile = drush_get_option('tarfile', false);
@@ -642,7 +663,7 @@ function civicrm_restore() {
     _civicrm_dsn_close();
 }
 
-function civicrm_civimail_cron() {
+function drush_civicrm_civimail_cron() {
   _civicrm_init();
 
   $_REQUEST['name'] = drush_get_option('civicrm_cron_username', NULL);
@@ -652,14 +673,26 @@ function civicrm_civimail_cron() {
   include 'bin/civimail.cronjob.php';
 }
 
-function civicrm_updatemembershiprecord_cron() {
+function drush_civicrm_updatemembershiprecord_cron() {
   _civicrm_init();
 
   $_REQUEST['name'] = drush_get_option('civicrm_cron_username', NULL);
   $_REQUEST['pass'] = drush_get_option('civicrm_cron_password', NULL);
   $_REQUEST['key'] = drush_get_option('civicrm_sitekey', NULL);
 
-  include "bin/EmailProcessor.php";
+  global $argv;
+  $argv = array(
+            0 => "drush",
+            1 => "-u" . $_REQUEST['name'],
+            2 => "-p" . $_REQUEST['pass'],
+            3 => "-s" . drush_get_option('uri', false),
+         );
+
+  if (! defined('CIVICRM_CONFDIR')) {
+    define('CIVICRM_CONFDIR', drush_get_context('DRUSH_DRUPAL_ROOT') . '/sites/');
+  }
+
+  include "bin/UpdateMembershipRecord.php";
 }
 
 function civicrm_rest() {
@@ -760,7 +793,7 @@ function _civicrm_dsn_close( ) {
         $GLOBALS['db_url'] = $globalDbUrl;
     }
 }
- 
+
 function _civicrm_init( ) {
     static $init = null;
 
@@ -783,6 +816,21 @@ function _civicrm_init( ) {
         drush_die(dt('Could not locate CiviCRM codebase. Make sure CiviCRM settings file has correct information.'));
     }
 
+    // also initialize config object
+    require_once 'CRM/Core/Config.php';
+    $config =& CRM_Core_Config::singleton( );
+
     $init = true;
     return $init;
+}
+
+function _civicrm_get_crmpath( ) {
+    
+    if ( !$crmpath = drush_get_option('destination', false) ) {
+        $crmpath = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE).'/modules/'; 
+        if ( !is_dir( $crmpath ) ) {
+            $crmpath = "sites/all/modules";
+        }
+    }
+    return $crmpath;        
 }
