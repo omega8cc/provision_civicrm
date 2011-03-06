@@ -79,11 +79,6 @@ function drush_civicrm_post_provision_install($url = null) {
     drush_set_option('civicrm_cron_username', 'civicron', 'site');
     drush_set_option('civicrm_cron_password', $civicron_password, 'site');
 
-    d()->service('civicrm')->data['civicrm_cron_username'];
-
-    // FIXME: should probably go in an Aegir service?
-    // variable_set('civicrm_cronpassword', $civicrm_cronpassword);
-
     // Create civicron role
     db_query("INSERT INTO {role} (name) VALUES ('%s')", 'civicron');
 
