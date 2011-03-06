@@ -164,6 +164,14 @@ function civicrm_drush_command() {
         array('callback'    => 'civicrm_sql_cli',
               'description' => "Open a SQL command-line interface using CiviCRM's credentials.",
               );
+    $items['civicrm-civimail-cron'] = 
+        array('callback'    => 'civicrm_civimail_cron',
+              'description' => "Run the CiviMail cron.",
+              );
+    $items['civicrm-updatemembershiprecord-cron'] = 
+        array('callback'    => 'civicrm_updatemembershiprecord_cron',
+              'description' => "Run the CiviMember UpdateMembershipRecord cron.",
+              );
 
     return $items;
 }
@@ -182,12 +190,14 @@ function civicrm_pkg_install( ) {
         drush_die(dt('CiviCRM database name not specified.'));
     }
 
+# [ML]
+    if ( !$sitekey = drush_get_option('sitekey', false) ) {
+        $sitekey = md5(uniqid( '', true ) . $siteRoot);
+    }
+
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
     $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT'); // , FALSE);
     $modPath    = "$drupalRoot/$siteRoot/modules";
-
-    # [ML]
-    $sitekey = md5(uniqid( '', true ) . $siteRoot);
 
 // drush_log(dt("test: " . $drupalRoot . ' -- ' . print_r($siteRoot, 1) . ' -- ' . $modPath));
 $modPath = "$drupalRoot/sites/all/modules"; // [ML]
@@ -632,6 +642,26 @@ function civicrm_restore() {
     _civicrm_dsn_close();
 }
 
+function civicrm_civimail_cron() {
+  _civicrm_init();
+
+  $_REQUEST['name'] = drush_get_option('civicrm_cron_username', NULL);
+  $_REQUEST['pass'] = drush_get_option('civicrm_cron_password', NULL);
+  $_REQUEST['key'] = drush_get_option('civicrm_sitekey', NULL);
+
+  include 'bin/civimail.cronjob.php';
+}
+
+function civicrm_updatemembershiprecord_cron() {
+  _civicrm_init();
+
+  $_REQUEST['name'] = drush_get_option('civicrm_cron_username', NULL);
+  $_REQUEST['pass'] = drush_get_option('civicrm_cron_password', NULL);
+  $_REQUEST['key'] = drush_get_option('civicrm_sitekey', NULL);
+
+  include "bin/EmailProcessor.php";
+}
+
 function civicrm_rest() {
     _civicrm_init();
 
@@ -730,7 +760,7 @@ function _civicrm_dsn_close( ) {
         $GLOBALS['db_url'] = $globalDbUrl;
     }
 }
-
+ 
 function _civicrm_init( ) {
     static $init = null;
 

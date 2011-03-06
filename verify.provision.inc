@@ -53,6 +53,19 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     $db_host = drush_get_option('db_host', 'site');
     $db_name = drush_get_option('db_name', 'site');
 
+    // Change the password for the civicron user
+    $civicron_password = md5(uniqid(rand(), true));
+    drush_set_option('password', $civicron_password);
+    drush_user_password('civicron');
+    drush_set_option('civicrm_cron_password', $civicron_password, 'site');
+
+    // Check for a site key
+    if (! drush_get_option('civicrm_sitekey', NULL)) {
+      drush_log(dt("CiviCRM: none found, generating a new site key"), 'ok');
+      $sitekey = md5(uniqid( '', true ));
+      drush_set_option('civicrm_sitekey', $sitekey, 'site');
+    }
+
     // include civicrm installer helper file (otherwise PEAR DB.php will fail to include parts)
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
     $crmPath = $drupalRoot . '/sites/all/modules/civicrm'; // FIXME
@@ -66,7 +79,7 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     }
     require_once "$civicrmInstallerHelper";
 
-    _civicrm_generate_settings_file($db_user, $db_passwd, $db_host, $db_name, variable_get('civicrm_site_key', NULL));
+    _civicrm_generate_settings_file($db_user, $db_passwd, $db_host, $db_name, drush_get_option('civicrm_sitekey', NULL));
     drush_log(dt("CiviCRM: Generated config civicrm.settings.php file"));
 
     drush_set_option('oldVal_1', drush_get_option('civicrm_old_path'));
@@ -78,8 +91,9 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     civicrm_config_update();
     drush_log(dt("CiviCRM: domain and directory paths updated"));
 
-    civicrm_cache_clear();
-
     drush_set_option('site_civicrm', TRUE, 'site');
+    // drush_print(print_r(d()->service('civicrm'), 1));
+
+    civicrm_cache_clear();
   }
 }

@@ -37,6 +37,11 @@ function drush_civicrm_post_provision_install($url = null) {
     drush_set_option('dbhost', $db_host);
     drush_set_option('dbname', $db_name);
 
+    $sitekey = md5(uniqid( '', true ) . $siteRoot);
+
+    drush_set_option('sitekey', $sitekey);
+    drush_set_option('civicrm_sitekey', $sitekey, 'site');
+
     // Generates the civicrm.settings.php
     civicrm_pkg_install();
 
@@ -62,6 +67,36 @@ function drush_civicrm_post_provision_install($url = null) {
     civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_data.mysql');
     civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_acl.mysql');
 
+    // Create a civicron user and role
+    $url = $GLOBALS['base_url'];
+    if (preg_match('/https?:\/\/(.*)/', $url, $matches)) {
+      $url = $matches[1];
+    }
+
+    $civicron_cronpassword = md5(uniqid(rand(), true));
+
+    drush_set_option('mail', 'civicrm-no-reply@' . $url);
+    drush_set_option('password', $civicron_password);
+    drush_user_create('civicron');
+
+    drush_set_option('civicrm_cron_username', 'civicron', 'site');
+    drush_set_option('civicrm_cron_password', $civicron_password, 'site');
+
+    d()->service('civicrm')->data['civicrm_cron_username'];
+
+    // FIXME: should probably go in an Aegir service?
+    // variable_set('civicrm_cronpassword', $civicrm_cronpassword);
+
+    // Create civicron role
+    db_query("INSERT INTO {role} (name) VALUES ('%s')", 'civicron');
+
+    drush_user_add_role('civicron', 'civicron');
+
+    // Assign permissions to civicron role
+    db_query("INSERT INTO {permission} (rid, perm)
+              VALUES (3, 'access CiviCRM, access CiviContribute, access CiviEvent, access CiviMail, access CiviMail subscribe/unsubscribe pages, access CiviMember, access CiviPledge, access CiviReport, access Contact Dashboard, access Report Criteria, access all custom data, add contacts, edit all contacts, edit all events, edit contributions, edit event participants, view all activities, view all contacts, view all notes')");
+
     drush_pm_enable('civicrm');
   }
 }
+
