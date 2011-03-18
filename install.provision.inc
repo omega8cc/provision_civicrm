@@ -68,25 +68,31 @@ function drush_civicrm_post_provision_install($url = null) {
     civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_acl.mysql');
 
     // Create a civicron user and role
-    $url = drush_get_option('uri', false);
-
-    $civicron_cronpassword = md5(uniqid(rand(), true));
-
-    drush_set_option('mail', 'civicrm-no-reply@' . $url);
-    drush_set_option('password', $civicron_password);
-    drush_user_create('civicron');
-
-    drush_set_option('civicrm_cron_username', 'civicron', 'site');
-    drush_set_option('civicrm_cron_password', $civicron_password, 'site');
-
-    // Create civicron role
-    db_query("INSERT INTO {role} (name) VALUES ('%s')", 'civicron');
-
-    drush_user_add_role('civicron', 'civicron');
-
-    // Assign permissions to civicron role
-    db_query("INSERT INTO {permission} (rid, perm)
-              VALUES (3, 'access CiviCRM, access CiviContribute, access CiviEvent, access CiviMail, access CiviMail subscribe/unsubscribe pages, access CiviMember, access CiviPledge, access CiviReport, access Contact Dashboard, access Report Criteria, access all custom data, add contacts, edit all contacts, edit all events, edit contributions, edit event participants, view all activities, view all contacts, view all notes')");
+    if (function_exists("drush_user_create")) {
+      $url = drush_get_option('uri', false);
+  
+      $civicron_cronpassword = md5(uniqid(rand(), true));
+  
+      drush_set_option('mail', 'civicrm-no-reply@' . $url);
+      drush_set_option('password', $civicron_password);
+      drush_user_create('civicron');
+  
+      drush_set_option('civicrm_cron_username', 'civicron', 'site');
+      drush_set_option('civicrm_cron_password', $civicron_password, 'site');
+  
+      // Create civicron role
+      db_query("INSERT INTO {role} (name) VALUES ('%s')", 'civicron');
+  
+      drush_user_add_role('civicron', 'civicron');
+  
+      // Assign permissions to civicron role
+      db_query("INSERT INTO {permission} (rid, perm)
+                VALUES (3, 'access CiviCRM, access CiviContribute, access CiviEvent, access CiviMail, access CiviMail subscribe/unsubscribe pages, access CiviMember, access CiviPledge, access CiviReport, access Contact Dashboard, access Report Criteria, access all custom data, add contacts, edit all contacts, edit all events, edit contributions, edit event participants, view all activities, view all contacts, view all notes')");
+    } else {
+      drush_log(dt("Not running drush 4.x or above, so cannot create civicron user and role. If you want to run the CiviCRM crons using drush, you will have to create them manually. Once you have done so, you can edit the site's sites/example.org/drushrc.php and set the correct username and password for the cron."));
+      drush_set_option('civicrm_cron_username', 'civicron', 'site');
+      drush_set_option('civicrm_cron_password', NULL, 'site');
+    }
 
     drush_pm_enable('civicrm');
   }
