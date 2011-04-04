@@ -97,6 +97,20 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     drush_set_option('site_civicrm', TRUE, 'site');
     // drush_print(print_r(d()->service('civicrm'), 1));
 
+    // Make sure the template_c has the correct permissions
+    $templates_compile_dir = d()->site_path . '/files/civicrm/templates_c';
+    drush_log(dt('dir = ' . $templates_compile_dir));
+
+    provision_file()->chmod($templates_compile_dir, 0770)
+      ->succeed('Changed permissions of <code>@path</code> to @perm')
+      ->fail('Could not change permissions <code>@path</code> to @perm')
+      ->status();
+
+    provision_file()->chgrp($templates_compile_dir, d('@server_master')->web_group, TRUE)
+      ->succeed('Change group ownership of settings.php to @path')
+      ->fail('Could not change group ownership of settings.php to @path')
+      ->status();
+
     civicrm_cache_clear();
   }
 }
