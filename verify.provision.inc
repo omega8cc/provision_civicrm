@@ -54,10 +54,13 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     $db_name = drush_get_option('db_name', 'site');
 
     // Change the password for the civicron user
+    /* [ML] depends on drush 4.x, and will break if cron is configured externally
+        and cron user may not exist anyway
     $civicron_password = md5(uniqid(rand(), true));
     drush_set_option('password', $civicron_password);
     drush_user_password('civicron');
     drush_set_option('civicrm_cron_password', $civicron_password, 'site');
+    */
 
     // Check for a site key
     if (! drush_get_option('civicrm_sitekey', NULL)) {
