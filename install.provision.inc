@@ -50,7 +50,8 @@ function drush_civicrm_post_provision_install($url = null) {
 
     $dsn = "mysql://{$db_user}:{$db_passwd}@{$db_host}/{$db_name}?new_link=true";
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
-    $crmPath = $drupalRoot . '/sites/all/modules/civicrm'; // FIXME
+    // $crmPath = $drupalRoot . '/sites/all/modules/civicrm'; // FIXME
+    $crmPath = realpath(dirname($packages['base']['modules']['civicrm']['filename']) . '/../');
     $sqlPath = $crmPath . DIRECTORY_SEPARATOR . 'sql';
 
     // include civicrm installer helper file (otherwise PEAR DB.php will fail to include parts)
@@ -95,6 +96,19 @@ function drush_civicrm_post_provision_install($url = null) {
     }
 
     drush_pm_enable('civicrm');
+
+    // Fix some paths (which, after enabling the module, seem broken..?)
+    $uri = drush_get_option('uri', false);
+    $base_url = 'http://' . d()->uri;
+    $paths = array(
+      'userFrameworkResourceURL' => $base_url . '/sites/all/modules/civicrm/',
+      'imageUploadURL' => $base_url . '/sites/' . $uri . '/files/civicrm/persist/contribute/',
+      // 'customCSSURL'   => $base_url . '/sites/' . $uri . '/files/civicrm/custom_css/',
+    );
+
+    foreach ($paths as $key => $val) {
+      db_query("UPDATE {civicrm_option_value} set value = '%s' where name = '%s'", $val, $key);
+    }
   }
 }
 
