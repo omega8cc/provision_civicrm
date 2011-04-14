@@ -102,13 +102,13 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     drush_log(dt('dir = ' . $templates_compile_dir));
 
     provision_file()->chmod($templates_compile_dir, 0770)
-      ->succeed('Changed permissions of <code>@path</code> to @perm')
-      ->fail('Could not change permissions <code>@path</code> to @perm')
+      ->succeed('Changed permissions of @path to @perm')
+      ->fail('Could not change permissions <code>@path to @perm')
       ->status();
 
     provision_file()->chgrp($templates_compile_dir, d('@server_master')->web_group, TRUE)
-      ->succeed('Change group ownership of settings.php to @path')
-      ->fail('Could not change group ownership of settings.php to @path')
+      ->succeed('Change group ownership @path to @perm')
+      ->fail('Could not change group ownership of @path to @perm')
       ->status();
 
     civicrm_cache_clear();
