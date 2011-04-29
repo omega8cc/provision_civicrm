@@ -158,7 +158,7 @@ function _provivision_civicrm_upgradedb() {
   $result = $template->get_template_vars('message'); // capture the required message.
   ob_end_clean();
 
-  if (preg_match('/CiviCRM upgrade was successful/', $result)) {
+  if (preg_match('/' . ts('CiviCRM upgrade was successful.') . '/', $result)) {
     drush_log(dt("CiviCRM: " . $result));
   } else {
     drush_set_error(dt("CiviCRM: upgrade failed: " . $result));
