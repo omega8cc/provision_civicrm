@@ -97,21 +97,39 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     drush_set_option('site_civicrm', TRUE, 'site');
     // drush_print(print_r(d()->service('civicrm'), 1));
 
-    // Make sure the template_c has the correct permissions
-    $templates_compile_dir = d()->site_path . '/files/civicrm/templates_c';
-    drush_log(dt('dir = ' . $templates_compile_dir));
+    // Make sure the template_c and uploads have the correct permissions
+    $cividirs = array(
+      '/files/civicrm/templates_c', 
+      '/files/civicrm/upload',
+      '/files/civicrm/persist',
+    );
 
-    provision_file()->chmod($templates_compile_dir, 0770)
+    foreach ($cividirs as $dir) {
+      $templates_compile_dir = d()->site_path . $dir;
+  
+      provision_file()->chmod($templates_compile_dir, 0770)
+        ->succeed('Changed permissions of @path to @perm')
+        ->fail('Could not change permissions <code>@path to @perm')
+        ->status();
+  
+      provision_file()->chgrp($templates_compile_dir, d('@server_master')->web_group, TRUE)
+        ->succeed('Change group ownership @path to @perm')
+        ->fail('Could not change group ownership of @path to @perm')
+        ->status();
+    }
+
+    _provivision_civicrm_upgradedb();
+
+    // Fix permissions on civicrm.settings.php
+    provision_file()->chmod(d()->site_path . '/civicrm.settings.php', 0640)
       ->succeed('Changed permissions of @path to @perm')
       ->fail('Could not change permissions <code>@path to @perm')
       ->status();
 
-    provision_file()->chgrp($templates_compile_dir, d('@server_master')->web_group, TRUE)
+    provision_file()->chgrp(d()->site_path . '/civicrm.settings.php', d('@server_master')->web_group, TRUE)
       ->succeed('Change group ownership @path to @perm')
       ->fail('Could not change group ownership of @path to @perm')
       ->status();
-
-    _provivision_civicrm_upgradedb();
 
     civicrm_cache_clear();
   }
