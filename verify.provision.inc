@@ -142,26 +142,28 @@ function _provivision_civicrm_upgradedb() {
     drush_set_error('CiviCRM: Database check failed - the database looks to have been partially upgraded. You may want to reload the database with the backup and try the upgrade process again.');
   } else if ( !$codeVer ) {
     drush_set_error('CiviCRM: Version information missing in civicrm codebase.');
+  } else if ( version_compare($codeVer, $dbVer) < 0 ) {
+    drush_set_error(dt("CiviCRM: Database is marked with an unexpected version '!dbVer' which is higher than that of codebase version '!codeVer'.", array('!dbVer' => $dbVer, '!codeVer' => $codeVer)));
   } else if ( version_compare($codeVer, $dbVer) > 0 ) {
     drush_log(dt("CiviCRM: Starting with v!dbVer -> v!codeVer upgrade ..",
              array('!dbVer' => $dbVer, '!codeVer' => $codeVer)));
-  } else if ( version_compare($codeVer, $dbVer) < 0 ) {
-    drush_set_error(dt("CiviCRM: Database is marked with an unexpected version '!dbVer' which is higher than that of codebase version '!codeVer'.", array('!dbVer' => $dbVer, '!codeVer' => $codeVer)));
-  } else {
+
     drush_log(dt("CiviCRM: Starting with upgrade .."));
-  }
 
-  require_once( 'CRM/Upgrade/Page/Upgrade.php' );
-  $upgrade =& new CRM_Upgrade_Page_Upgrade( );
-  ob_start(); // to suppress html output /w source code.
-  $upgrade->run( );
-  $result = $template->get_template_vars('message'); // capture the required message.
-  ob_end_clean();
-
-  if (preg_match('/' . ts('CiviCRM upgrade was successful.') . '/', $result)) {
-    drush_log(dt("CiviCRM: " . $result));
+    require_once( 'CRM/Upgrade/Page/Upgrade.php' );
+    $upgrade =& new CRM_Upgrade_Page_Upgrade( );
+    ob_start(); // to suppress html output /w source code.
+    $upgrade->run( );
+    $result = $template->get_template_vars('message'); // capture the required message.
+    ob_end_clean();
+  
+    if (preg_match('/' . ts('CiviCRM upgrade was successful.') . '/', $result)) {
+      drush_log(dt("CiviCRM: " . $result));
+    } else {
+      drush_set_error(dt("CiviCRM: upgrade failed: " . $result));
+    }
   } else {
-    drush_set_error(dt("CiviCRM: upgrade failed: " . $result));
+    drush_log(dt("CiviCRM: no upgrade required ($codeVer = $dbVer)."));
   }
 }
 
