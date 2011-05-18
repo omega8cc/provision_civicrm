@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 3.3                                                |
+ | CiviCRM version 3.4                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2010                                |
+ | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -28,7 +28,7 @@
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2010
+ * @copyright CiviCRM LLC (c) 2004-2011
  * $Id$
  *
  */
@@ -172,6 +172,10 @@ function civicrm_drush_command() {
     $items['civicrm-civimail'] = 
         array('callback'    => 'drush_civicrm_civimail_cron',
               'description' => "Run the CiviMail cron.",
+              'examples'    => 
+              array('drush --uri=http://example.com civicrm-civimail -u admin -p admin -s 12345678912345678912345678' => 
+                    'Run CiviMail cron with admin credentials and site key.',
+                    ),
               );
     $items['civicrm-member-records'] = 
         array('callback'    => 'drush_civicrm_updatemembershiprecord_cron',
@@ -194,6 +198,7 @@ function civicrm_pkg_install( ) {
     if ( !$dbname = drush_get_option('dbname', false) ) {
         drush_die(dt('CiviCRM database name not specified.'));
     }
+    $crmpath = _civicrm_get_crmpath( );
 
 # [ML]
     if ( !$sitekey = drush_get_option('sitekey', false) ) {
@@ -664,13 +669,32 @@ function civicrm_restore() {
 }
 
 function drush_civicrm_civimail_cron() {
-  _civicrm_init();
+    _civicrm_init();
 
-  $_REQUEST['name'] = drush_get_option('civicrm_cron_username', NULL);
-  $_REQUEST['pass'] = drush_get_option('civicrm_cron_password', NULL);
-  $_REQUEST['key'] = drush_get_option('civicrm_sitekey', NULL);
+    $_REQUEST['name'] = drush_get_option('civicrm_cron_username', NULL);
+    $_REQUEST['pass'] = drush_get_option('civicrm_cron_password', NULL);
+    $_REQUEST['key'] = drush_get_option('civicrm_sitekey', NULL);
 
-  include 'bin/civimail.cronjob.php';
+    global $argv;
+    $argv = array(
+              0 => "drush",
+              1 => "-u" . drush_get_option('civicrm_cron_username', NULL),
+              2 => "-p" . drush_get_option('civicrm_cron_password', NULL),
+              3 => "-s" . drush_get_option('civicrm_sitekey', NULL),
+            );
+
+    if (! defined('CIVICRM_CONFDIR')) {
+      define('CIVICRM_CONFDIR', drush_get_context('DRUSH_DRUPAL_ROOT') . '/sites/');
+    }
+
+
+    include 'bin/civimail.cronjob.php';
+
+/*
+    $_GET['q'] = 'civicrm/mailing/queue';
+    $_GET['reset'] = '1';
+    menu_execute_active_handler();
+*/
 }
 
 function drush_civicrm_updatemembershiprecord_cron() {
