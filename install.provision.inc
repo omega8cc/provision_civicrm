@@ -72,7 +72,7 @@ function drush_civicrm_post_provision_install($url = null) {
     if (function_exists("drush_user_create")) {
       $url = drush_get_option('uri', false);
   
-      $civicron_cronpassword = md5(uniqid(rand(), true));
+      $civicron_password = md5(uniqid(rand(), true));
   
       drush_set_option('mail', 'civicrm-no-reply@' . $url);
       drush_set_option('password', $civicron_password);

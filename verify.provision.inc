@@ -23,9 +23,9 @@ function drush_civicrm_provision_verify($url = null) {
  * in the civicrm_domain table
  */
 function drush_civicrm_pre_provision_verify($url = NULL) {
-  $packages = drush_get_option('packages', 'platform');
+  $packages = drush_get_option('packages', array(), 'platform');
 
-  if (!array_key_exists('civicrm', $packages['modules'])) {
+  if (empty($packages) || !array_key_exists('civicrm', $packages['modules'])) {
     return;
   }
 
@@ -41,10 +41,10 @@ function drush_civicrm_pre_provision_verify($url = NULL) {
  */
 function drush_civicrm_post_provision_verify($url = NULL) {
   if (d()->type == 'site') {
-    $packages = drush_get_option('packages', 'platform');
+    $packages = drush_get_option('packages', array(), 'platform');
 
     if (!array_key_exists('civicrm', $packages['modules'])) {
-      drush_log(dt("CiviCRM not installed?"));
+      drush_log(dt("CiviCRM not installed."));
       return;
     }
 
