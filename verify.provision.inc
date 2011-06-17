@@ -53,14 +53,26 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     $db_host = drush_get_option('db_host', 'site');
     $db_name = drush_get_option('db_name', 'site');
 
-    // Change the password for the civicron user
-    /* [ML] depends on drush 4.x, and will break if cron is configured externally
-        and cron user may not exist anyway
-    $civicron_password = md5(uniqid(rand(), true));
-    drush_set_option('password', $civicron_password);
-    drush_user_password('civicron');
-    drush_set_option('civicrm_cron_password', $civicron_password, 'site');
-    */
+    // Create the civicron user if it does not exist
+    if (drush_drupal_major_version() >= 7) {
+      $result = db_query("SELECT uid FROM {users} WHERE name = :name", array(':name' => 'civicron'));
+    }
+    else {
+      $result = db_query("SELECT uid FROM {users} WHERE name = '%s'", 'civicron');
+    }
+
+    if (drush_db_result($result) === FALSE) {
+      drush_log(dt("CiviCRM: civicron 
+      _provision_civicrm_create_civicron_user();
+    }
+/* [ML] do not reset the password on verify, it will break external crons
+    else {
+      $civicron_password = md5(uniqid(rand(), true));
+      drush_set_option('password', $civicron_password);
+      drush_user_password('civicron');
+      drush_set_option('civicrm_cron_password', $civicron_password, 'site');
+    }
+*/
 
     // Check for a site key
     if (! drush_get_option('civicrm_sitekey', NULL)) {
@@ -80,8 +92,8 @@ function drush_civicrm_post_provision_verify($url = NULL) {
         drush_log(dt("CiviCRM installer helper file is missing."));
         return;
     }
-    require_once "$civicrmInstallerHelper";
 
+    require_once "$civicrmInstallerHelper";
     _civicrm_generate_settings_file($db_user, $db_passwd, $db_host, $db_name, drush_get_option('civicrm_sitekey', NULL));
     drush_log(dt("CiviCRM: Generated config civicrm.settings.php file"));
 
