@@ -41,10 +41,10 @@ function drush_civicrm_pre_provision_verify($url = NULL) {
  */
 function drush_civicrm_post_provision_verify($url = NULL) {
   if (d()->type == 'site') {
-    $packages = drush_get_option('packages', array(), 'platform');
+    $packages = drush_get_option('packages', array(), 'site');
 
     if (!array_key_exists('civicrm', $packages['modules'])) {
-      drush_log(dt("CiviCRM not installed."));
+      drush_log(dt("CiviCRM: not detected. Skipping verify operations for CiviCRM."));
       return;
     }
 
