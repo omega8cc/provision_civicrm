@@ -687,6 +687,10 @@ function drush_civicrm_civimail_cron() {
       define('CIVICRM_CONFDIR', drush_get_context('DRUSH_DRUPAL_ROOT') . '/sites/');
     }
 
+    // log in a sub-directory specific for drush otherwise we may have permission
+    // issues on the log file (if it has been created by the web server).
+    $config = CRM_Core_Config::singleton( );
+    $config->configAndLogDir = $config->configAndLogDir . 'drush/';
 
     include 'bin/civimail.cronjob.php';
 
