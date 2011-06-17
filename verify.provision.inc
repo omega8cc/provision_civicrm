@@ -62,7 +62,6 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     }
 
     if (drush_db_result($result) === FALSE) {
-      drush_log(dt("CiviCRM: civicron 
       _provision_civicrm_create_civicron_user();
     }
 /* [ML] do not reset the password on verify, it will break external crons
