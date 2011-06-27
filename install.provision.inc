@@ -74,26 +74,8 @@ function drush_civicrm_post_provision_install($url = null) {
 
     _provision_civicrm_create_civicron_user();
 
-    // Fix some paths (which, after enabling the module, seem broken..?)
-    $uri = drush_get_option('uri', false);
-    $base_url = 'http://' . d()->uri;
-
-    $paths = array(
-      'userFrameworkResourceURL' => $base_url . '/sites/all/modules/civicrm/',
-      'imageUploadURL' => $base_url . '/sites/' . $uri . '/files/civicrm/persist/contribute/',
-      // 'customCSSURL'   => $base_url . '/sites/' . $uri . '/files/civicrm/custom_css/',
-    );
-
-    foreach ($paths as $key => $val) {
-      switch (drush_drupal_major_version()) {
-        case 6:
-          db_query("UPDATE {civicrm_option_value} set value = '%s' where name = '%s'", array($val, $key));
-        break;
-        case 7:
-          db_query("UPDATE {civicrm_option_value} set value = :val where name = :key", array(':val' => $val, ':key' => $key));
-        break;
-      }
-    }
+    // Fix some paths:
+    _provision_civicrm_fixresourceurls();
   }
 }
 

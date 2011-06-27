@@ -105,6 +105,9 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     civicrm_config_update();
     drush_log(dt("CiviCRM: domain and directory paths updated"));
 
+    // Update Resource URLs
+    _provision_civicrm_fixresourceurls();
+
     drush_set_option('site_civicrm', TRUE, 'site');
     // drush_print(print_r(d()->service('civicrm'), 1));
 

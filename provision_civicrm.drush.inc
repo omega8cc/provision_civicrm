@@ -99,3 +99,68 @@ function _provision_civicrm_fixpermissions() {
     ->status();
 }
 
+/**
+ * Update the CiviCRM Resource URLs
+ * There must be a much simpler/cleaner way of doing this..
+ */
+function _provision_civicrm_fixresourceurls() {
+  $packages = drush_get_option('packages', array(), 'site');
+
+  if (!empty($packages) && array_key_exists('civicrm', $packages['modules'])) {
+    // ex: /var/aegir/platforms/example-civicrm-3.4.x/sites/all/modules/civicrm/drupal/civicrm.module
+    $val = $packages['modules']['civicrm']['filename'];
+  }
+  else {
+    // during install, the path must be fetched from the platform context
+    // aegir is not very clear about how this works..
+    $packages = drush_get_option('packages', 'platform');
+
+    if (!empty($packages) && array_key_exists('civicrm', $packages['base']['modules'])) {
+      // ex: /var/aegir/platforms/example-civicrm-3.4.x/sites/all/modules/civicrm/drupal/civicrm.module
+      $val = $packages['base']['modules']['civicrm']['filename'];
+
+      // FIXME:
+      // this is buggy during install, does not seem to work, c.f. do#1201734
+    }
+    else {
+      drush_log(dt("CiviCRM: not detected. Skipping fixresourceurl(), this should not happen."));
+      return;
+    }
+  }
+
+  // ex: /var/aegir/platforms/example-civicrm-3.4.x/ (for strlen)
+  $drupal_basepath = drush_get_context('DRUSH_DRUPAL_ROOT');
+
+  $civicrm_modulepath = substr($packages['modules']['civicrm']['filename'], strlen($drupal_basepath) + 1);
+  $civicrm_modulepath = dirname($civicrm_modulepath); // remove 'civicrm.module'
+  $civicrm_modulepath = dirname($civicrm_modulepath); // remove 'drupal'
+
+  // force a full URL otherwise there may be i18n issues, ex: http://example.org/en/sites/all/modules/civicrm
+  $civicrm_resourceurl = 'http://' . drush_get_option('uri') . '/' . $civicrm_modulepath;
+
+  _provision_civicrm_update_option_value('userFrameworkResourceURL', $civicrm_resourceurl);
+
+  // Image Upload URL
+  $civicrm_imageurl = 'http://' . drush_get_option('uri') . '/sites/' . drush_get_option('uri') . '/files/civicrm/persist/contribute/';
+  _provision_civicrm_update_option_value('imageUploadURL', $civicrm_imageurl);
+}
+
+/**
+ * Wrapper to update values in {civicrm_option_value}
+ */
+function _provision_civicrm_update_option_value($key, $val) {
+  $oldval = db_result(db_query("SELECT value FROM {civicrm_option_value} WHERE name = '%s'", $key));
+  drush_log(dt('CiviCRM: before UPDATE: old val for ' . $key . ' = ' . $oldval));
+
+  switch (drush_drupal_major_version()) {
+    case 6:
+      db_query("UPDATE {civicrm_option_value} set value = '%s' where name = '%s'", array($val, $key));
+      drush_log(dt("CiviCRM: updated " . check_plain($key) . ' = ' . check_plain($val)));
+      break;
+    case 7:
+      db_query("UPDATE {civicrm_option_value} set value = :val where name = :key", array(':val' => $val, ':key' => $key));
+      drush_log(dt("CiviCRM: updated " . check_plain($key) . ' = ' . check_plain($val)));
+      break;
+  }
+}
+
