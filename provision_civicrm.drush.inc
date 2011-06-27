@@ -58,3 +58,44 @@ function _provision_civicrm_create_civicron_user() {
 
   return TRUE;
 }
+
+
+/**
+ * Fix permissions on all CiviCRM writable directories
+ */
+function _provision_civicrm_fixpermissions() {
+  // Make sure the template_c and uploads have the correct permissions
+  $civipaths = array(
+    '/files/civicrm/templates_c', 
+    '/files/civicrm/upload',
+    '/files/civicrm/persist',
+  );
+
+  foreach ($civipaths as $p) {
+    $fullpath = d()->site_path . $p;
+
+    // we setgid directories, avoids a few permissions issues
+    // where files are aegir.www-data.
+    provision_file()->chmod($fullpath, 02770, TRUE)
+      ->succeed('Changed permissions of @path to @perm')
+      ->fail('Could not change permissions <code>@path to @perm')
+      ->status();
+
+    provision_file()->chgrp($fullpath, d('@server_master')->web_group, TRUE)
+      ->succeed('Changed group ownership @path to @gid')
+      ->fail('Could not change group ownership of @path to @gid')
+      ->status();
+  }
+
+  // Fix permissions on civicrm.settings.php
+  provision_file()->chmod(d()->site_path . '/civicrm.settings.php', 0640)
+    ->succeed('Changed permissions of @path to @perm')
+    ->fail('Could not change permissions <code>@path to @perm')
+    ->status();
+
+  provision_file()->chgrp(d()->site_path . '/civicrm.settings.php', d('@server_master')->web_group, TRUE)
+    ->succeed('Changed group ownership @path to @gid')
+    ->fail('Could not change group ownership of @path to @gid')
+    ->status();
+}
+

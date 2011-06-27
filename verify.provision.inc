@@ -109,38 +109,13 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     // drush_print(print_r(d()->service('civicrm'), 1));
 
     // Make sure the template_c and uploads have the correct permissions
-    $cividirs = array(
-      '/files/civicrm/templates_c', 
-      '/files/civicrm/upload',
-      '/files/civicrm/persist',
-    );
-
-    foreach ($cividirs as $dir) {
-      $templates_compile_dir = d()->site_path . $dir;
-  
-      provision_file()->chmod($templates_compile_dir, 0770)
-        ->succeed('Changed permissions of @path to @perm')
-        ->fail('Could not change permissions <code>@path to @perm')
-        ->status();
-  
-      provision_file()->chgrp($templates_compile_dir, d('@server_master')->web_group, TRUE)
-        ->succeed('Changed group ownership @path to @gid')
-        ->fail('Could not change group ownership of @path to @gid')
-        ->status();
-    }
+    _provision_civicrm_fixpermissions();
 
     _provivision_civicrm_upgradedb();
 
-    // Fix permissions on civicrm.settings.php
-    provision_file()->chmod(d()->site_path . '/civicrm.settings.php', 0640)
-      ->succeed('Changed permissions of @path to @perm')
-      ->fail('Could not change permissions <code>@path to @perm')
-      ->status();
-
-    provision_file()->chgrp(d()->site_path . '/civicrm.settings.php', d('@server_master')->web_group, TRUE)
-      ->succeed('Changed group ownership @path to @gid')
-      ->fail('Could not change group ownership of @path to @gid')
-      ->status();
+    // Run again because the upgrade generates some template cache (d.o #1201290)
+    // In general we had so many permissions issues, we want to be extra-pedantic.
+    _provision_civicrm_fixpermissions();
 
     civicrm_cache_clear();
   }
@@ -158,6 +133,13 @@ function _provivision_civicrm_upgradedb() {
   $_GET['q'] = 'civicrm/upgrade';
   require_once 'CRM/Core/Config.php';
   require_once 'CRM/Core/Smarty.php';
+
+  // log in a sub-directory specific for drush otherwise we may have permission
+  // issues on the log file (if it has been created by the web server).
+  $config = CRM_Core_Config::singleton( );
+  $config->configAndLogDir = $config->configAndLogDir . 'drush/';
+  $config->templateCompileDir = $config->templateCompileDir . 'drush/';
+
   $template =& CRM_Core_Smarty::singleton( );
 
   require_once 'CRM/Utils/System.php';
