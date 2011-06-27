@@ -124,8 +124,8 @@ function drush_civicrm_post_provision_verify($url = NULL) {
         ->status();
   
       provision_file()->chgrp($templates_compile_dir, d('@server_master')->web_group, TRUE)
-        ->succeed('Change group ownership @path to @perm')
-        ->fail('Could not change group ownership of @path to @perm')
+        ->succeed('Change group ownership @path to @gid')
+        ->fail('Could not change group ownership of @path to @gid')
         ->status();
     }
 
@@ -138,8 +138,8 @@ function drush_civicrm_post_provision_verify($url = NULL) {
       ->status();
 
     provision_file()->chgrp(d()->site_path . '/civicrm.settings.php', d('@server_master')->web_group, TRUE)
-      ->succeed('Change group ownership @path to @perm')
-      ->fail('Could not change group ownership of @path to @perm')
+      ->succeed('Change group ownership @path to @gid')
+      ->fail('Could not change group ownership of @path to @gid')
       ->status();
 
     civicrm_cache_clear();
