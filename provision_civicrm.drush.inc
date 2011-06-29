@@ -149,7 +149,7 @@ function _provision_civicrm_fixresourceurls() {
  * Wrapper to update values in {civicrm_option_value}
  */
 function _provision_civicrm_update_option_value($key, $val) {
-  $oldval = db_result(db_query("SELECT value FROM {civicrm_option_value} WHERE name = '%s'", $key));
+  $oldval = drush_db_result(db_query("SELECT value FROM {civicrm_option_value} WHERE name = '%s'", $key));
   drush_log(dt('CiviCRM: before UPDATE: old val for ' . $key . ' = ' . $oldval));
 
   switch (drush_drupal_major_version()) {
