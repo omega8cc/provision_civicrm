@@ -41,12 +41,20 @@ function drush_civicrm_pre_provision_verify($url = NULL) {
  */
 function drush_civicrm_post_provision_verify($url = NULL) {
   if (d()->type == 'site') {
-    $packages = drush_get_option('packages', array(), 'site');
+    drush_include_engine('drupal', 'environment');
+    $modules = drush_get_modules();
 
-    if (!array_key_exists('civicrm', $packages['modules'])) {
+    if (! array_key_exists('civicrm', $modules)) {
       drush_log(dt("CiviCRM: not detected. Skipping verify operations for CiviCRM."));
       return;
     }
+
+    if (! $modules['civicrm']->status) {
+      drush_log(dt("CiviCRM: not enabled. Skipping verify operations for CiviCRM. You will need to re-verify the site if you enable CiviCRM in the future."));
+      return;
+    }
+
+    drush_log(dt("CiviCRM: running post verify."));
 
     $db_user = drush_get_option('db_user', 'site');
     $db_passwd = drush_get_option('db_passwd', 'site');
