@@ -4,7 +4,7 @@
  * @file
  *
  * CiviCRM support module for the Aegir backend.
- *    
+ *
  * This file contains the verify operations.
  */
 
@@ -172,7 +172,7 @@ function _provivision_civicrm_upgradedb() {
     $upgrade->run( );
     $result = $template->get_template_vars('message'); // capture the required message.
     ob_end_clean();
-  
+
     if (preg_match('/' . ts('CiviCRM upgrade was successful.') . '/', $result)) {
       drush_log(dt("CiviCRM: " . $result));
     } else {
