@@ -14,18 +14,20 @@
  * in the civicrm_domain table
  */
 function drush_civicrm_pre_provision_verify($url = NULL) {
-  drush_include_engine('drupal', 'environment');
-  $modules = drush_get_modules();
+  if (d()->type == 'site') {
+    drush_include_engine('drupal', 'environment');
+    $modules = drush_get_modules();
 
-  if (! array_key_exists('civicrm', $modules)) {
-    return;
+    if (! array_key_exists('civicrm', $modules)) {
+      return;
+    }
+
+    $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
+    drush_set_option('civicrm_old_path', $drupalRoot);
+
+    $baseUrl = 'http://' . drush_get_option('uri', false);
+    drush_set_option('civicrm_old_baseurl', $baseUrl);
   }
-
-  $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
-  drush_set_option('civicrm_old_path', $drupalRoot);
-
-  $baseUrl = 'http://' . drush_get_option('uri', false);
-  drush_set_option('civicrm_old_baseurl', $baseUrl);
 }
 
 /**
