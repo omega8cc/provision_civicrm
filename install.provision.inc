@@ -25,6 +25,13 @@ function drush_civicrm_post_provision_install($url = null) {
       return;
     }
 
+    // Quietly exit if we're trying to install an old/unsupported CiviCRM
+    // Don't completely fail, the user can install manually (for migrations/upgrades).
+    if ($packages['base']['modules']['civicrm']['version'] < 3) {
+      drush_log(dt('CiviCRM: CiviCRM version is not supported, too old: ' . check_plain($packages['base']['modules']['civicrm']['version'])));
+      return;
+    }
+
     drush_log(dt("Configuring site for civicrm support"));
 
     $db_user = drush_get_option('db_user', 'site');
