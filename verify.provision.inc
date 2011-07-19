@@ -1,31 +1,23 @@
 <?php
 
 /**
- * implementation of hook_provision_verify
+ * @file
+ *
+ * CiviCRM support module for the Aegir backend.
+ *    
+ * This file contains the verify operations.
  */
-function drush_civicrm_provision_verify($url = null) {
-  if (d()->type == 'site') {
-    // todo: trigger if civicrm is already enabled and configured on the site
-    // load civicrm.settings.php
-    // patch db connection information
-    // patch paths
-    // patch urls
-    // empty files/civicrm/templates_c
-    // load data from civicrm_domain.backend_config
-    // update data with new paths and urls
-    // ...save
-    // empty civicrm_cache ?
-  }
-}
+
 
 /**
  * Keep old values of paths/url so that we can later search and replace
  * in the civicrm_domain table
  */
 function drush_civicrm_pre_provision_verify($url = NULL) {
-  $packages = drush_get_option('packages', array(), 'platform');
+  drush_include_engine('drupal', 'environment');
+  $modules = drush_get_modules();
 
-  if (empty($packages) || !array_key_exists('civicrm', $packages['modules'])) {
+  if (! array_key_exists('civicrm', $modules)) {
     return;
   }
 
