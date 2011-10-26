@@ -71,8 +71,14 @@ function drush_civicrm_post_provision_install($url = null) {
     }
 
     require_once "$civicrmInstallerHelper";
+
+    drush_log(dt("CiviCRM: importing $sqlPath civicrm.mysql"));
     civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm.mysql');
+
+    drush_log(dt("CiviCRM: importing $sqlPath civicrm_data.mysql"));
     civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_data.mysql');
+
+    drush_log(dt("CiviCRM: importing $sqlPath civicrm_acl.mysql"));
     civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_acl.mysql');
 
     // Enable civicrm module before setting up civicron role,
