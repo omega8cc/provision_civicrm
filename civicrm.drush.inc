@@ -482,8 +482,16 @@ function civicrm_config_update() {
     }
 
     require_once 'CRM/Core/I18n.php';
-    require_once 'CRM/Core/BAO/Setting.php';
-    $result = CRM_Core_BAO_Setting::doSiteMove( $defaultValues );
+    require_once 'CRM/Utils/System.php';
+    $codeVer = CRM_Utils_System::version();
+
+    if (substr($codeVer, 0, 3) >= '4.1') {
+      require_once 'CRM/Core/BAO/ConfigSetting.php';
+      $result = CRM_Core_BAO_ConfigSetting::doSiteMove( $defaultValues );
+    } else {
+      require_once 'CRM/Core/BAO/Setting.php';
+      $result = CRM_Core_BAO_Setting::doSiteMove( $defaultValues );
+    }
 
     if ( $result )
         drush_log(dt('Config successfully updated.'), 'completed');
