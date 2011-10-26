@@ -76,6 +76,10 @@ function civicrm_drush_command() {
                       '--dbname'      => 'MySQL database name of your Drupal/CiviCRM database.',
                       '--tarfile'     => 'Path to your CiviCRM tar.gz file.',
                       '--destination' => 'Destination modules path to extract CiviCRM (eg : sites/all/modules ).',
+                      '--lang'        => 'Default language to use for installation.',
+                      '--langtarfile' => 'Path to your l10n tar.gz file.',
+                      '--site_url'     => 'Base Url for your drupal/CiviCRM website without http (e.g. mysite.com)',
+                      '--ssl'         => 'Using ssl for your drupal/CiviCRM website if set to on (e.g. --ssl=on)'
                       ),
               );
     $items['civicrm-upgrade-db']  = 
@@ -206,15 +210,11 @@ function civicrm_pkg_install( ) {
     }
 
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
-    $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT'); // , FALSE);
     $modPath    = "$drupalRoot/$siteRoot/modules";
+    $lang = drush_get_option('lang', '');
+    $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT'); // , FALSE);
 
-// drush_log(dt("test: " . $drupalRoot . ' -- ' . print_r($siteRoot, 1) . ' -- ' . $modPath));
 $modPath = "$drupalRoot/sites/all/modules"; // [ML]
-/*
-context -> alias['site_path']
-packages -> base['modules']['civicrm']['filename'] -> [..­]all/modules/civicrm/drupal/civicrm.module
-*/
 
   #  if ( !is_dir( "$modPath/civicrm" ) ) {
         // extract tarfile at right place
@@ -259,7 +259,8 @@ function _civicrm_extract_tarfile( $destinationPath, $option = 'tarfile' ) {
     drush_shell_exec("tar -xf $tarpath -C \"$destinationPath\"");
 }
 
-function _civicrm_install_db( $dbuser, $dbpass, $dbhost, $dbname ) {
+function _civicrm_install_db( $dbuser, $dbpass, $dbhost, $dbname, 
+                                                 $modPath, $lang) {
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
     $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
     
@@ -275,8 +276,23 @@ function _civicrm_install_db( $dbuser, $dbpass, $dbhost, $dbname ) {
     drush_print(dt("Loading CiviCRM database structure .."));
     civicrm_source($dsn, $sqlPath . '/civicrm.mysql'   );
     drush_print(dt("Loading CiviCRM database with required data .."));
-    civicrm_source($dsn, $sqlPath . '/civicrm_data.mysql');
-    civicrm_source($dsn, $sqlPath . '/civicrm_acl.mysql' );
+    // testing the translated sql files availability
+    $data_file = $sqlPath . '/civicrm_data.mysql';
+    $acl_file = $sqlPath . '/civicrm_acl.mysql';
+    if ($lang != ''){
+        if (file_exists($sqlPath . '/civicrm_data.' . $lang . '.mysql')
+            and file_exists($sqlPath . '/civicrm_acl.' . $lang . '.mysql')
+            and $lang != ''){
+                $data_file = $sqlPath . '/civicrm_data.' . $lang . '.mysql';
+                $acl_file = $sqlPath . '/civicrm_acl.'. $lang . '.mysql';
+        }else{
+            drush_print(dt("No sql files could be retrieved for \"" . $lang . 
+                                              "\", using default language."));
+        }
+    }
+    civicrm_source($dsn, $data_file);
+    civicrm_source($dsn, $acl_file);
+
     drush_log(dt("CiviCRM database loaded successfully."), 'ok');
 }
 
@@ -324,8 +340,16 @@ $siteRoot = $site_alias_info['site_path'];
     }
 
     drush_print(dt("Generating civicrm settings file .."));
-    $baseUrl = drush_get_option('site_url', false);
-    $baseUrl = !$baseUrl ? ($GLOBALS['base_url']) : ('http://' . $baseUrl);
+    if ( $baseUrl = drush_get_option('site_url', false )){
+        $ssl = drush_get_option('ssl', false);
+        if ($ssl == 'on'){
+            $protocol = 'https';
+        }else{
+            $protocol = 'http';
+        }
+    }
+
+    $baseUrl = !$baseUrl ? ($GLOBALS['base_url']) : ($protocol . '://' . $baseUrl);
     
     $db_spec = _drush_sql_get_db_spec();
     $params  = array(
@@ -412,7 +436,7 @@ function civicrm_upgrade_db() {
     $_GET['q'] = 'civicrm/upgrade';
     require_once 'CRM/Core/Config.php';
     require_once 'CRM/Core/Smarty.php';
-    $template =& CRM_Core_Smarty::singleton( );
+    $template = CRM_Core_Smarty::singleton( );
 
     require_once 'CRM/Utils/System.php';
     require_once 'CRM/Core/BAO/Domain.php';
@@ -434,7 +458,7 @@ function civicrm_upgrade_db() {
     }
 
     require_once( 'CRM/Upgrade/Page/Upgrade.php' );
-    $upgrade =& new CRM_Upgrade_Page_Upgrade( );
+    $upgrade = new CRM_Upgrade_Page_Upgrade( );
     ob_start(); // to suppress html output /w source code.
     $upgrade->run( );
     $result = $template->get_template_vars('message'); // capture the required message.
@@ -477,11 +501,11 @@ function civicrm_cache_clear() {
     $config->clearDBCache( );
 
     // also cleanup the templates_c directory
-    $config =& CRM_Core_Config::singleton( );
+    $config = CRM_Core_Config::singleton( );
     $config->cleanup( 1 , false );
 
     // also cleanup the session object
-    $session =& CRM_Core_Session::singleton( );
+    $session = CRM_Core_Session::singleton( );
     $session->reset(1);
 
     drush_log(dt('Cache cleared.'), 'ok');
@@ -739,10 +763,10 @@ function civicrm_rest() {
     }
 
     require_once 'CRM/Utils/REST.php';
-    $rest =& new CRM_Utils_REST();
+    $rest = new CRM_Utils_REST();
 
     require_once 'CRM/Core/Config.php';
-    $config =& CRM_Core_Config::singleton();
+    $config = CRM_Core_Config::singleton();
 
     global $civicrm_root;
     // adding dummy script, since based on this api file path is computed.
@@ -802,12 +826,24 @@ function _civicrm_dsn_init( $reset = false ) {
 
     _civicrm_init();
 
-    if ( !$globalDbUrl && CIVICRM_DSN ) {
-        if ( array_key_exists('db_url', $GLOBALS) ) {
-            $globalDbUrl = $GLOBALS['db_url']; // keep a copy so that we can put it back.
+    // check if we're using the old-style $GLOBALS['db_url']
+    // or the new style ( > drupal 7 )
+    if (drush_drupal_major_version() >= 7) {
+      $database = drush_get_option('database', 'default');
+      $target = drush_get_option('target', 'default');
+      if ( !$globalDbUrl && CIVICRM_DSN ) {
+        if ( isset($GLOBALS['databases'][$database][$target]) ) {
+            $globalDbUrl = $GLOBALS['database'][$database][$target]; // keep a copy so that we can put it back.
         }
-        // now modify $GLOBALS['db_url'] so that drush works on CIVICRM_DSN instead of drupal's
-        $GLOBALS['db_url'] = CIVICRM_DSN;
+        // now modify $GLOBALS so that drush works on CIVICRM_DSN instead of drupal's
+        $GLOBALS['databases'][$database][$target] = drush_convert_db_from_db_url(CIVICRM_DSN);
+      }
+    } else {
+      if ( !$globalDbUrl && CIVICRM_DSN ) {
+            $globalDbUrl = $GLOBALS['db_url']; // keep a copy so that we can put it back.
+      }
+      // now modify $GLOBALS so that drush works on CIVICRM_DSN instead of drupal's
+      $GLOBALS['db_url'] = CIVICRM_DSN;
     }
     $dbUrl = $globalDbUrl;
     $globalDbUrl = $reset ? null : $globalDbUrl;
@@ -818,7 +854,13 @@ function _civicrm_dsn_init( $reset = false ) {
 function _civicrm_dsn_close( ) {
     $globalDbUrl = _civicrm_dsn_init( true );
     if ( $globalDbUrl ) {
-        $GLOBALS['db_url'] = $globalDbUrl;
+        if (drush_drupal_major_version() >= 7) {
+            $database = drush_get_option('database', 'default');
+            $target = drush_get_option('target', 'default');
+            $GLOBALS['databases'][$database][$target] = $globalDbUrl;
+        } else {
+            $GLOBALS['db_url'] = $globalDbUrl;
+        }
     }
 }
 
@@ -827,7 +869,8 @@ function _civicrm_init( ) {
 
     if ( $init ) return $init; // return if already initialized
 
-    $drupal_root = drush_get_context('DRUSH_DRUPAL_ROOT');
+    global $cmsPath;
+    $cmsPath = $drupal_root = drush_get_context('DRUSH_DRUPAL_ROOT');
     $site_root   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
     $civicrmSettingsFile = "$drupal_root/$site_root/civicrm.settings.php";
 
@@ -846,7 +889,7 @@ function _civicrm_init( ) {
 
     // also initialize config object
     require_once 'CRM/Core/Config.php';
-    $config =& CRM_Core_Config::singleton( );
+    $config = CRM_Core_Config::singleton( );
 
     $init = true;
     return $init;
