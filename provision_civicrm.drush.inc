@@ -168,3 +168,51 @@ function _provision_civicrm_update_option_value($key, $val) {
   }
 }
 
+/**
+ * Get an array of civicrm related options
+ *
+ * @param $op
+ *   A string describing the task being run, for debugging purposes
+ */
+function _provision_civicrm_drush_options($op = 'unknown') {
+  drush_log("In $op: Fetching CiviCRM Drush options");
+  $civi_opts = array(
+    'civicrm_cron_username' => '',
+    'civicrm_cron_password' => '',
+    'civicrm_sitekey' => '',
+  );
+  foreach ($civi_opts as $opt => $val) {
+    $civi_opts[$opt] = drush_get_option($opt, NULL);
+
+    /* Debugging code follows, comment out this line to enable it.
+    if ($civi_opts[$opt] == NULL) {
+      drush_set_error('PROVISION_CIVICRM_DRUSH_OPTIONS', "In $op: Failed to get valid $opt");
+    }
+    $dump = var_export($civi_opts[$opt], true);
+    drush_log("In $op: $dump retrieved for $opt", 'warning');
+    //*/
+
+  }
+  return $civi_opts;
+}
+
+/**
+ * Check we are in a civicrm site context
+ */
+function _provision_civicrm_is_site_context($op = 'unkown') {
+  if (d()->type == 'site') {
+    // Check if the CiviCRM code base is present in the platform
+    // Note: after putting the code there, you need to verify
+    // the platform.
+    $packages = drush_get_option('packages', array('modules' => NULL));
+    $modules = $packages['modules'];
+    if (is_array($modules) && array_key_exists('civicrm', $modules)) {
+      return TRUE;
+    }
+    else {
+      return FALSE;
+    }
+  }
+  return FALSE;
+}
+

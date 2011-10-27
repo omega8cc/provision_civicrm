@@ -14,13 +14,7 @@
  * in the civicrm_domain table
  */
 function drush_civicrm_pre_provision_verify($url = NULL) {
-  if (d()->type == 'site') {
-    drush_include_engine('drupal', 'environment');
-    $modules = drush_get_modules();
-
-    if (! array_key_exists('civicrm', $modules)) {
-      return;
-    }
+  if (_provision_civicrm_is_site_context()) {
 
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
     drush_set_option('civicrm_old_path', $drupalRoot);
@@ -34,18 +28,19 @@ function drush_civicrm_pre_provision_verify($url = NULL) {
  * Persist civicrm settings in the drushrc.php
  */
 function drush_civicrm_post_provision_verify($url = NULL) {
-  if (d()->type == 'site') {
+  if (_provision_civicrm_is_site_context()) {
     drush_include_engine('drupal', 'environment');
     $modules = drush_get_modules();
-
-    if (! array_key_exists('civicrm', $modules)) {
-      drush_log(dt("CiviCRM: not detected. Skipping verify operations for CiviCRM."));
-      return;
-    }
 
     if (! $modules['civicrm']->status) {
       drush_log(dt("CiviCRM: not enabled. Skipping verify operations for CiviCRM. You will need to re-verify the site if you enable CiviCRM in the future."));
       return;
+    }
+
+    // Make sure to write the civicrm options
+    $civi_opts = _provision_civicrm_drush_options('post verify');
+    foreach ($civi_opts as $opt => $val) {
+      drush_set_option($opt, $val, 'site');
     }
 
     drush_log(dt("CiviCRM: running post verify."));
@@ -54,33 +49,6 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     $db_passwd = drush_get_option('db_passwd', 'site');
     $db_host = drush_get_option('db_host', 'site');
     $db_name = drush_get_option('db_name', 'site');
-
-    // Create the civicron user if it does not exist
-    if (drush_drupal_major_version() >= 7) {
-      $result = db_query("SELECT uid FROM {users} WHERE name = :name", array(':name' => 'civicron'));
-    }
-    else {
-      $result = db_query("SELECT uid FROM {users} WHERE name = '%s'", 'civicron');
-    }
-
-    if (drush_db_result($result) === FALSE) {
-      _provision_civicrm_create_civicron_user();
-    }
-/* [ML] do not reset the password on verify, it will break external crons
-    else {
-      $civicron_password = md5(uniqid(rand(), true));
-      drush_set_option('password', $civicron_password);
-      drush_user_password('civicron');
-      drush_set_option('civicrm_cron_password', $civicron_password, 'site');
-    }
-*/
-
-    // Check for a site key
-    if (! drush_get_option('civicrm_sitekey', NULL)) {
-      drush_log(dt("CiviCRM: none found, generating a new site key"), 'ok');
-      $sitekey = md5(uniqid( '', true ));
-      drush_set_option('civicrm_sitekey', $sitekey, 'site');
-    }
 
     // include civicrm installer helper file (otherwise PEAR DB.php will fail to include parts)
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
