@@ -19,7 +19,7 @@ function drush_civicrm_post_provision_install($url = null) {
     // Check if the CiviCRM code base is present in the platform
     // Note: after putting the code there, you need to verify
     // the platform.
-    $packages = drush_get_option('packages', 'platform');
+    $packages = drush_get_option('packages', NULL, 'platform');
 
     if (!array_key_exists('civicrm', $packages['base']['modules'])) {
       return;
@@ -34,10 +34,10 @@ function drush_civicrm_post_provision_install($url = null) {
 
     drush_log(dt("Configuring site for civicrm support"));
 
-    $db_user = drush_get_option('db_user', 'site');
-    $db_passwd = drush_get_option('db_passwd', 'site');
-    $db_host = drush_get_option('db_host', 'site');
-    $db_name = drush_get_option('db_name', 'site');
+    $db_user = drush_get_option('db_user', NULL, 'site');
+    $db_passwd = drush_get_option('db_passwd', NULL, 'site');
+    $db_host = drush_get_option('db_host', NULL, 'site');
+    $db_name = drush_get_option('db_name', NULL, 'site');
 
     drush_set_option('dbuser', $db_user);
     drush_set_option('dbpass', $db_passwd);

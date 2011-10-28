@@ -45,10 +45,10 @@ function drush_civicrm_post_provision_verify($url = NULL) {
 
     drush_log(dt("CiviCRM: running post verify."));
 
-    $db_user = drush_get_option('db_user', 'site');
-    $db_passwd = drush_get_option('db_passwd', 'site');
-    $db_host = drush_get_option('db_host', 'site');
-    $db_name = drush_get_option('db_name', 'site');
+    $db_user = drush_get_option('db_user', NULL, 'site');
+    $db_passwd = drush_get_option('db_passwd', NULL, 'site');
+    $db_host = drush_get_option('db_host', NULL, 'site');
+    $db_name = drush_get_option('db_name', NULL, 'site');
 
     // include civicrm installer helper file (otherwise PEAR DB.php will fail to include parts)
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
