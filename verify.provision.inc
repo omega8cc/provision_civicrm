@@ -144,7 +144,7 @@ function _provivision_civicrm_upgradedb() {
     if (preg_match('/' . ts('CiviCRM upgrade was successful.') . '/', $result)) {
       drush_log(dt("CiviCRM: @result", array('@result' => $result)), 'ok');
     } else {
-      drush_set_error(dt("CiviCRM: upgrade failed: @result", array('@result' => $result)), 'error');
+      drush_log(dt("CiviCRM: upgrade failed: @result", array('@result' => $result)), 'error');
     }
   } else {
     drush_log(dt("CiviCRM: no upgrade required (@codeVer = @dbVer)", array('@codeVer' => $codeVer, '@dbVer' => $dbVer)), 'ok');

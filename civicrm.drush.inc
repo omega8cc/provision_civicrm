@@ -210,23 +210,20 @@ function civicrm_pkg_install( ) {
     }
 
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
-    $modPath    = "$drupalRoot/$siteRoot/modules";
+    $modPath    = _provision_civicrm_get_package_path();
     $lang = drush_get_option('lang', '');
     $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT'); // , FALSE);
-
-$modPath = "$drupalRoot/sites/all/modules"; // [ML]
 
   #  if ( !is_dir( "$modPath/civicrm" ) ) {
         // extract tarfile at right place
   #      _civicrm_extract_tarfile( $modPath );
         
         // include civicrm installer helper file
-        $civicrmInstallerHelper = "$drupalRoot/$siteRoot/modules/civicrm/install/civicrm.php";
-$civicrmInstallerHelper = "$drupalRoot/sites/all/modules/civicrm/install/civicrm.php"; // [ML]
+        $civicrmInstallerHelper = $modPath . "/install/civicrm.php"; // provision_civicrm patch
         if ( !file_exists($civicrmInstallerHelper) ) {
-            drush_die(dt("Tarfile could not be unpacked OR CiviCRM installer helper file is missing."));
+            drush_log(dt("The CiviCRM installer helper file could not be found (searched @path).", array('@path' => $civicrmInstallerHelper)), 'error');
         }
-        drush_log(dt("Tarfile unpacked."), 'ok');
+#        drush_log(dt("Tarfile unpacked."), 'ok');
 
         // setup all required files/civicrm/* directories
         _civicrm_create_files_dirs( );

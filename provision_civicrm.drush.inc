@@ -119,36 +119,18 @@ function _provision_civicrm_fixpermissions() {
  * There must be a much simpler/cleaner way of doing this..
  */
 function _provision_civicrm_fixresourceurls() {
-  $packages = drush_get_option('packages', array(), 'site');
+  $civicrm_modulepath = _provision_civicrm_get_package_path();
 
-  if (!empty($packages) && array_key_exists('civicrm', $packages['modules'])) {
-    // ex: /var/aegir/platforms/example-civicrm-3.4.x/sites/all/modules/civicrm/drupal/civicrm.module
-    $val = $packages['modules']['civicrm']['filename'];
-  }
-  else {
-    // during install, the path must be fetched from the platform context
-    // aegir is not very clear about how this works..
-    $packages = drush_get_option('packages', 'platform');
-
-    if (!empty($packages) && array_key_exists('civicrm', $packages['base']['modules'])) {
-      // ex: /var/aegir/platforms/example-civicrm-3.4.x/sites/all/modules/civicrm/drupal/civicrm.module
-      $val = $packages['base']['modules']['civicrm']['filename'];
-
-      // FIXME:
-      // this is buggy during install, does not seem to work, c.f. do#1201734
-    }
-    else {
-      drush_log(dt("CiviCRM: not detected. Skipping fixresourceurl(), this should not happen."));
-      return;
-    }
+  if (! $civicrm_modulepath) {
+    drush_log(dt('CiviCRM: could not detect the path for CiviCRM. This should not happen.'), 'warning');
+    return;
   }
 
-  // ex: /var/aegir/platforms/example-civicrm-3.4.x/ (for strlen)
+  // ex: /var/aegir/platforms/example-civicrm-3.4.x/ (for strlen below)
   $drupal_basepath = drush_get_context('DRUSH_DRUPAL_ROOT');
 
-  $civicrm_modulepath = substr($packages['modules']['civicrm']['filename'], strlen($drupal_basepath) + 1);
-  $civicrm_modulepath = dirname($civicrm_modulepath); // remove 'civicrm.module'
-  $civicrm_modulepath = dirname($civicrm_modulepath); // remove 'drupal'
+  // Remove the part up until the Drupal root, so that we have only the part exposed to the web
+  $civicrm_modulepath = substr($civicrm_modulepath, strlen($drupal_basepath) + 1);
 
   // force a full URL otherwise there may be i18n issues, ex: http://example.org/en/sites/all/modules/civicrm
   $civicrm_resourceurl = 'http://' . drush_get_option('uri') . '/' . $civicrm_modulepath;
@@ -229,6 +211,37 @@ function _provision_civicrm_is_site_context($op = 'unkown') {
       return FALSE;
     }
   }
+  return FALSE;
+}
+
+/**
+ * Get the path where the CiviCRM module is installed
+ * Ex: /var/aegir/platforms/[...]/sites/all/modules/civicrm
+ */
+function _provision_civicrm_get_package_path() {
+  $packages = drush_get_option('packages', NULL);
+  $crmpath  = '';
+
+  if (is_array($packages)) {
+    if (is_array($packages['modules'])) {
+      // Most likely in a site context
+      if (array_key_exists('civicrm', $packages['modules'])) {
+        $crmpath = $packages['modules']['civicrm']['filename'];
+      }
+    }
+    elseif (is_array($packages['base'])) {
+      // Most likely during the civicrm installation
+      if (array_key_exists('civicrm', $packages['base']['modules'])) {
+        $crmpath = $packages['base']['modules']['civicrm']['filename'];
+      }
+    }
+  }
+
+  if ($crmpath) {
+    // Get the parent directory of the module, which is in civicrm/drupal/civicrm.module
+    return dirname(dirname($crmpath));
+  }
+
   return FALSE;
 }
 
