@@ -19,7 +19,7 @@ function _provision_civicrm_create_civicron_user() {
 
   $url = drush_get_option('uri', false);
 
-  $civicron_password = md5(uniqid(rand(), true));
+  $civicron_password = provision_password();
 
   drush_set_option('mail', 'civicrm-no-reply@' . $url);
   drush_set_option('password', $civicron_password);
