@@ -149,21 +149,20 @@ function _provision_civicrm_fixresourceurls() {
  * Wrapper to update values in {civicrm_option_value}
  */
 function _provision_civicrm_update_option_value($key, $val) {
-
   switch (drush_drupal_major_version()) {
     case 6:
       $oldval = drush_db_result(db_query("SELECT value FROM {civicrm_option_value} WHERE name = '%s'", $key));
-      drush_log(dt('CiviCRM: before UPDATE: old val for ' . $key . ' = ' . $oldval));
+      drush_log(dt('CiviCRM: before UPDATE: old val for @key = @oldval', array('@key' => $key, '@oldval' => $oldval)));
 
       db_query("UPDATE {civicrm_option_value} set value = '%s' where name = '%s'", array($val, $key));
-      drush_log(dt("CiviCRM: updated " . check_plain($key) . ' = ' . check_plain($val)));
+      drush_log(dt("CiviCRM: updated @key = @val", array('@key' => check_plain($key), '@val' => check_plain($val))));
       break;
     case 7:
       $oldval = drush_db_result(db_query("SELECT value FROM {civicrm_option_value} WHERE name = :key", array(':key' => $key)));
-      drush_log(dt('CiviCRM: before UPDATE: old val for ' . $key . ' = ' . $oldval));
+      drush_log(dt('CiviCRM: before UPDATE: old val for @key = @oldval', array('@key' => $key, '@oldval' => $oldval)));
 
       db_query("UPDATE {civicrm_option_value} set value = :val where name = :key", array(':val' => $val, ':key' => $key));
-      drush_log(dt("CiviCRM: updated " . check_plain($key) . ' = ' . check_plain($val)));
+      drush_log(dt("CiviCRM: updated @key = @val", array('@key' => check_plain($key), '@val' => check_plain($val))));
       break;
   }
 }
@@ -175,12 +174,14 @@ function _provision_civicrm_update_option_value($key, $val) {
  *   A string describing the task being run, for debugging purposes
  */
 function _provision_civicrm_drush_options($op = 'unknown') {
-  drush_log("In $op: Fetching CiviCRM Drush options");
+  drush_log(dt("CiviCRM: In @op: Fetching CiviCRM Drush options", array('@op' => $op)));
+
   $civi_opts = array(
     'civicrm_cron_username' => '',
     'civicrm_cron_password' => '',
     'civicrm_sitekey' => '',
   );
+
   foreach ($civi_opts as $opt => $val) {
     $civi_opts[$opt] = drush_get_option($opt, NULL);
 
@@ -189,10 +190,10 @@ function _provision_civicrm_drush_options($op = 'unknown') {
       drush_set_error('PROVISION_CIVICRM_DRUSH_OPTIONS', "In $op: Failed to get valid $opt");
     }
     $dump = var_export($civi_opts[$opt], true);
-    drush_log("In $op: $dump retrieved for $opt", 'warning');
+    drush_log(dt("In @op: $dump retrieved for @opt", array('@op' => $op, '@opt' => $opt)), 'warning');
     //*/
-
   }
+
   return $civi_opts;
 }
 

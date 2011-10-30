@@ -64,7 +64,7 @@ function drush_civicrm_post_provision_verify($url = NULL) {
 
     require_once "$civicrmInstallerHelper";
     _civicrm_generate_settings_file($db_user, $db_passwd, $db_host, $db_name, drush_get_option('civicrm_sitekey', NULL));
-    drush_log(dt("CiviCRM: Generated config civicrm.settings.php file"));
+    drush_log(dt("CiviCRM: Generated config civicrm.settings.php file"), 'ok');
 
     drush_set_option('oldVal_1', drush_get_option('civicrm_old_path'));
     drush_set_option('newVal_1', drush_get_context('DRUSH_DRUPAL_ROOT'));
@@ -142,12 +142,12 @@ function _provivision_civicrm_upgradedb() {
     ob_end_clean();
 
     if (preg_match('/' . ts('CiviCRM upgrade was successful.') . '/', $result)) {
-      drush_log(dt("CiviCRM: " . $result));
+      drush_log(dt("CiviCRM: @result", array('@result' => $result)), 'ok');
     } else {
-      drush_set_error(dt("CiviCRM: upgrade failed: " . $result));
+      drush_set_error(dt("CiviCRM: upgrade failed: @result", array('@result' => $result)), 'error');
     }
   } else {
-    drush_log(dt("CiviCRM: no upgrade required ($codeVer = $dbVer)."));
+    drush_log(dt("CiviCRM: no upgrade required (@codeVer = @dbVer)", array('@codeVer' => $codeVer, '@dbVer' => $dbVer)), 'ok');
   }
 }
 
