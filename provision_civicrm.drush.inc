@@ -97,6 +97,21 @@ function _provision_civicrm_fixpermissions() {
     ->succeed('Changed group ownership @path to @gid')
     ->fail('Could not change group ownership of @path to @gid')
     ->status();
+
+  // Remove the Config.IDS.ini file (d.o#1226668)
+  // Usually 'verify' will call civicrm_cache_clear() which will
+  // delete most of the contents of template_c, but there have been
+  // some hard to trace bugs, so we are not taking any chances.
+  require_once 'CRM/Core/Config.php';
+  $config = CRM_Core_Config::singleton( );
+  $configFile = $config->configAndLogDir . 'Config.IDS.ini';
+
+  if (provision_file()->exists($configFile)->status()) {
+    provision_file()->unlink($configFile)
+      ->succeed('CiviCRM: Removing stale @path')
+      ->fail('CiviCRM: Could not remove @path')
+      ->status();
+  }
 }
 
 /**
