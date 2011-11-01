@@ -66,6 +66,27 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     _civicrm_generate_settings_file($db_user, $db_passwd, $db_host, $db_name, drush_get_option('civicrm_sitekey', NULL));
     drush_log(dt("CiviCRM: Generated config civicrm.settings.php file"), 'ok');
 
+    // Set file acls on civicrm.settings.php, if necessary
+    if (function_exists('provisionacl_set_acl')) {
+      $group = d()->client_name;
+      $file = d()->site_path . '/' . 'civicrm.settings.php';
+      drush_log(dt('Attempting to set acls for @group on @file', array('@group' => $group, '@file' => $file)));
+
+      // Check the group
+      if (!provision_posix_groupname($group)) {
+        drush_log(dt('not setting acls on @file for non-existent group @group', array('@file' => $file, '@group' => $group)), 'warning');
+      }
+
+      // Check the file
+      else if (!file_exists($file)) {
+        drush_log(dt('@file not found, acls not configured', array('@file' => $file)), 'warning');
+      }
+
+      else {
+        provisionacl_set_acl('group', $group, 'r--', array($file), TRUE);
+      }
+    }
+
     drush_set_option('oldVal_1', drush_get_option('civicrm_old_path'));
     drush_set_option('newVal_1', drush_get_context('DRUSH_DRUPAL_ROOT'));
 
