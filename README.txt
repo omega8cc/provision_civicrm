@@ -12,7 +12,12 @@ Installation instructions
 Drop this directory in Aegir's Drush path (e.g. /var/aegir/.drush).
 
 Create an Aegir platform that has the CiviCRM module in its sites/all
-directory. Verify the platform once the module has been added.
+directory (although in recent versions, we try to phase out this requirement
+so that we can better support install profiles).
+
+A "drush make" makefile is available in civicrm.make.
+
+Verify the platform once the module has been added.
 
 When creating a new site, provision_civicrm will detect the presence
 of CiviCRM in the platform and will install/configure it automatically.
