@@ -10,6 +10,8 @@
 
 
 /**
+ * Implements hook_pre_provision_verify().
+ *
  * Keep old values of paths/url so that we can later search and replace
  * in the civicrm_domain table
  */
@@ -25,6 +27,8 @@ function drush_civicrm_pre_provision_verify($url = NULL) {
 }
 
 /**
+ * Implements hook_post_provision_verify().
+ *
  * Persist civicrm settings in the drushrc.php
  */
 function drush_civicrm_post_provision_verify($url = NULL) {
