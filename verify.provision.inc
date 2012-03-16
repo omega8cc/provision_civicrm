@@ -111,7 +111,7 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     // Make sure the template_c and uploads have the correct permissions
     _provision_civicrm_fixpermissions();
 
-    _provivision_civicrm_upgradedb();
+    _provision_civicrm_upgradedb();
 
     // Run again because the upgrade generates some template cache (d.o #1201290)
     // In general we had so many permissions issues, we want to be extra-pedantic.
@@ -126,7 +126,9 @@ function drush_civicrm_post_provision_verify($url = NULL) {
  * Code duplicated from the CiviCRM drush module, but adapted
  * so that is it easier to check the result.
  */
-function _provivision_civicrm_upgradedb() {
+function _provision_civicrm_upgradedb() {
+  drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb()"));
+
   _civicrm_init();
 
   $_POST['upgrade'] = 1;
