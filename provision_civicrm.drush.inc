@@ -6,7 +6,7 @@
  * Common functions used by install and verify.
  */
 
-function provision_drush_init() {
+function provision_civicrm_drush_init() {
   if (_provision_civicrm_is_site_context()) {
     // if other modules use PEAR (ex: print_mail), it may cause a PHP conflict
     // so declare our own include path here. See: #1431874
