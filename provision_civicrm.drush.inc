@@ -75,6 +75,8 @@ function _provision_civicrm_create_civicron_user() {
  * Fix permissions on all CiviCRM writable directories
  */
 function _provision_civicrm_fixpermissions() {
+  drush_log(dt("CiviCRM: in _provision_civicrm_fixpermissions()"));
+
   // Make sure the template_c and uploads have the correct permissions
   $civipaths = array(
     '/files/civicrm/templates_c', 
@@ -123,6 +125,8 @@ function _provision_civicrm_fixpermissions() {
       ->fail('CiviCRM: Could not remove @path')
       ->status();
   }
+
+  drush_log(dt("CiviCRM: finished _provision_civicrm_fixpermissions()"));
 }
 
 /**
@@ -136,6 +140,8 @@ function _provision_civicrm_fixresourceurls() {
     drush_log(dt('CiviCRM: could not detect the path for CiviCRM. This should not happen.'), 'warning');
     return;
   }
+
+  drush_log(dt("CiviCRM: in _provision_civicrm_fixresourceurls()"));
 
   // ex: /var/aegir/platforms/example-civicrm-3.4.x/ (for strlen below)
   $drupal_basepath = drush_get_context('DRUSH_DRUPAL_ROOT');
@@ -151,6 +157,8 @@ function _provision_civicrm_fixresourceurls() {
   // Image Upload URL
   $civicrm_imageurl = 'http://' . drush_get_option('uri') . '/sites/' . drush_get_option('uri') . '/files/civicrm/persist/contribute/';
   _provision_civicrm_update_option_value('imageUploadURL', $civicrm_imageurl);
+
+  drush_log(dt("CiviCRM: finished running _provision_civicrm_fixresourceurls()"));
 }
 
 /**
