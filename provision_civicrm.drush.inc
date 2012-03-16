@@ -6,6 +6,17 @@
  * Common functions used by install and verify.
  */
 
+function provision_drush_init() {
+  if (_provision_civicrm_is_site_context()) {
+    // if other modules use PEAR (ex: print_mail), it may cause a PHP conflict
+    // so declare our own include path here. See: #1431874
+    $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
+    $crmPath = _provision_civicrm_get_package_path();
+    $include_path = $crmPath . "/packages/:" . get_include_path( );
+    set_include_path( $include_path );
+  }
+}
+
 /**
  * Create a civicron user and role
  */
