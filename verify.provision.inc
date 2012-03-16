@@ -57,8 +57,10 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     // include civicrm installer helper file (otherwise PEAR DB.php will fail to include parts)
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
     $crmPath = _provision_civicrm_get_package_path();
+    /* moved to hook_drush_init()
     $include_path = $crmPath . "/packages/:" . get_include_path( );
     set_include_path( $include_path );
+    */
 
     $civicrmInstallerHelper = $crmPath . "/install/civicrm.php";
     if ( !file_exists($civicrmInstallerHelper) ) {
