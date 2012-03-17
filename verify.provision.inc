@@ -99,8 +99,10 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     drush_set_option('oldVal_2', drush_get_option('civicrm_old_baseurl'));
     drush_set_option('newVal_2', 'http://' . drush_get_option('uri'));
 
-    civicrm_config_update();
-    drush_log(dt("CiviCRM: domain and directory paths updated"));
+    drush_log(dt("CiviCRM: about to run _provision_civicrm_do_site_move()"));
+    // civicrm_config_update();
+    _provision_civicrm_do_site_move();
+    drush_log(dt("CiviCRM: finished running _provision_civicrm_do_site_move"));
 
     // Update Resource URLs
     _provision_civicrm_fixresourceurls();
@@ -178,5 +180,142 @@ function _provision_civicrm_upgradedb() {
   } else {
     drush_log(dt("CiviCRM: no upgrade required (@codeVer = @dbVer)", array('@codeVer' => $codeVer, '@dbVer' => $dbVer)), 'ok');
   }
+
+  drush_log(dt("CiviCRM: finished _provision_civicrm_upgradedb()"));
+}
+
+/**
+ * EXPERIMENTAL AND EVIL: forking the code from civicrm_update_config()
+ * and CRM/Core/BAO/Setting.php doSiteMove() because doSiteMove() in
+ * 4.1.1 doSiteMove() flushes the cache in a brutal way, especially on
+ * tables that do not yet exist.
+ *
+ * We need to propose a cleaner fix to CiviCRM core so that we do not
+ * need to maintain this type of forked code. TODO FIXME
+ */
+function _provision_civicrm_do_site_move($defaultValues = array()) {
+  //
+  // from drush civicrm_config_update()
+  //
+  _civicrm_init();
+
+  $defaultValues = array( );
+  $states = array( 'old', 'new' );
+  for ( $i = 1 ; $i <= 3; $i++ ) {
+    foreach ( $states as $state ) {
+      $name = "{$state}Val_{$i}";
+      $value = drush_get_option( $name, null );
+      if ( $value ) {
+        $defaultValues[$name] = $value;
+      }
+    }
+  }
+
+  require_once 'CRM/Core/I18n.php';
+
+  //
+  // from doSiteMove
+  //
+
+  $moveStatus = ts('Beginning site move process...') . '<br />';
+  // get the current and guessed values
+  list( $oldURL, $oldDir, $oldSiteName, $oldSiteRoot ) = CRM_Core_BAO_Setting::getConfigSettings( );
+  list( $newURL, $newDir, $newSiteName, $newSiteRoot ) = CRM_Core_BAO_Setting::getBestGuessSettings( );
+
+  require_once 'CRM/Utils/Request.php';
+
+  // retrieve these values from the argument list
+  $variables = array( 'URL', 'Dir', 'SiteName', 'SiteRoot', 'Val_1', 'Val_2', 'Val_3' );
+  $states     = array( 'old', 'new' );
+  foreach ( $variables as $varSuffix ) {
+      foreach ( $states as $state ) {
+          $var = "{$state}{$varSuffix}";
+          if ( ! isset( $$var ) ) {
+              if ( isset( $defaultValues[$var] ) ) {
+                  $$var = $defaultValues[$var];
+              } else {
+                  $$var = null;
+              }
+          }
+          $$var = CRM_Utils_Request::retrieve( $var,
+                                               'String',
+                                               CRM_Core_DAO::$_nullArray,
+                                               false,
+                                               $$var,
+                                               'REQUEST' );
+      }
+  }
+
+  $from = $to = array( );
+  foreach ( $variables as $varSuffix ) {
+      $oldVar = "old{$varSuffix}";
+      $newVar = "new{$varSuffix}";
+      //skip it if either is empty or both are exactly the same
+      if ( $$oldVar &&
+           $$newVar &&
+           $$oldVar != $$newVar ) {
+          $from[]  = $$oldVar;
+          $to[]    = $$newVar;
+      }
+  }
+
+  $sql = "
+SELECT config_backend
+FROM   civicrm_domain
+WHERE  id = %1
+";
+  $params = array( 1 => array( CRM_Core_Config::domainID( ), 'Integer' ) );
+  $configBackend = CRM_Core_DAO::singleValueQuery( $sql, $params );
+  if ( ! $configBackend ) {
+      CRM_Core_Error::fatal( ts('Returning early due to unexpected error - civicrm_domain.config_backend column value is NULL. Try visiting CiviCRM Home page.') );
+  }
+  $configBackend = unserialize( $configBackend );
+
+  $configBackend = str_replace( $from,
+                                $to  ,
+                                $configBackend );
+
+  $configBackend = serialize( $configBackend );
+  $sql = "
+UPDATE civicrm_domain
+SET    config_backend = %2
+WHERE  id = %1
+";
+  $params[2] = array( $configBackend, 'String' );
+  CRM_Core_DAO::executeQuery( $sql, $params );
+
+  // Apply the changes to civicrm_option_values
+  $optionGroups = array('url_preferences', 'directory_preferences');
+  foreach ($optionGroups as $option) {
+      foreach ( $variables as $varSuffix ) {
+          $oldVar = "old{$varSuffix}";
+          $newVar = "new{$varSuffix}";
+
+          $from = $$oldVar;
+          $to   = $$newVar;
+
+          if ($from && $to && $from != $to) {
+              $sql = '
+UPDATE civicrm_option_value
+SET    value = REPLACE(value, %1, %2)
+WHERE  option_group_id = (
+SELECT id
+FROM   civicrm_option_group
+WHERE  name = %3 )
+';
+              $params = array( 1 => array ( $from, 'String' ),
+                               2 => array ($to, 'String'),
+                               3 => array($option, 'String') );
+              CRM_Core_DAO::executeQuery( $sql, $params );
+          }
+      }
+  }
+
+  $config =& CRM_Core_Config::singleton( );
+
+  // clear the template_c and upload directory also
+  $config->cleanup( 3, true );
+
+  return $moveStatus;
 }
 
