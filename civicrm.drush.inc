@@ -1,7 +1,7 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 3.4                                                |
+ | CiviCRM version 4.1                                                |
  +--------------------------------------------------------------------+
  | Copyright CiviCRM LLC (c) 2004-2011                                |
  +--------------------------------------------------------------------+
@@ -66,6 +66,18 @@ function civicrm_drush_command() {
     $items = array();
 
     // the key in the $items array is the name of the command.
+    $items['civicrm-api'] = 
+        array('callback'    => 'drush_civicrm_api',
+              'description' => 'CLI access to CiviCRM APIs. It can return pretty-printor json formatted data.', 
+              'examples'    => 
+              array('drush civicrm-api contact.create first_name=John last_name=Doe contact_type=Individual' => 'Create a new contact named John Doe',
+                    'drush civicrm-api contact.create id=1 --out=json' =>  'Find/display a contact in JSON format',
+                    ),
+              'options'     =>  array(
+                  '--in' => 'Input type: "args" (command-line), "json" (STDIN)',
+                  '--out' => 'Output type: "pretty" (STDOUT), "json" (STDOUT)',
+                  ),
+              );
     $items['civicrm-install'] = 
         array('callback'    => 'civicrm_pkg_install',
               'description' => "Install a new instance of CiviCRM.",
@@ -173,9 +185,17 @@ function civicrm_drush_command() {
         array('callback'    => 'civicrm_sql_cli',
               'description' => "Open a SQL command-line interface using CiviCRM's credentials.",
               );
+    $items['civicrm-process-mail-queue'] = 
+        array('callback'    => 'drush_civicrm_process_mail_queue',
+              'description' => "Process pending CiviMail mailing jobs.",
+              'examples'    => 
+              array('drush civicrm-process-mail-queue -u admin' => 
+                    'Process CiviMail queue with admin credentials.',
+                    ),
+              );
     $items['civicrm-civimail'] = 
-        array('callback'    => 'drush_civicrm_civimail_cron',
-              'description' => "Run the CiviMail cron.",
+        array('callback'    => 'drush_civicrm_civimail_cron_old',
+              'description' => "DEPRECATED: Run the CiviMail cron (CiviCRM < 4.1).",
               'examples'    => 
               array('drush --uri=http://example.com civicrm-civimail -u admin -p admin -s 12345678912345678912345678' => 
                     'Run CiviMail cron with admin credentials and site key.',
@@ -219,14 +239,14 @@ function civicrm_pkg_install( ) {
   #      _civicrm_extract_tarfile( $modPath );
         
         // include civicrm installer helper file
-        $civicrmInstallerHelper = $modPath . "/install/civicrm.php"; // provision_civicrm patch
+        $civicrmInstallerHelper = "$modPath/install/civicrm.php"; // provision_civicrm patch
         if ( !file_exists($civicrmInstallerHelper) ) {
-            drush_log(dt("The CiviCRM installer helper file could not be found (searched @path).", array('@path' => $civicrmInstallerHelper)), 'error');
+            drush_die(dt("The CiviCRM installer helper file could not be found (searched @path).", array('@path' => $civicrmInstallerHelper)), 'error');
         }
 #        drush_log(dt("Tarfile unpacked."), 'ok');
 
         // setup all required files/civicrm/* directories
-        _civicrm_create_files_dirs( );
+        _civicrm_create_files_dirs( $civicrmInstallerHelper, $modPath );
 
         // install database
         //_civicrm_install_db($dbuser, $dbpass, $dbhost, $dbname);
@@ -234,8 +254,7 @@ function civicrm_pkg_install( ) {
         // generate civicrm.settings.php file
         _civicrm_generate_settings_file($dbuser, $dbpass, $dbhost, $dbname, $sitekey);
 
-//        module_enable(array('CiviCRM'));
-# drush_module_enable(array('CiviCRM')); // [ML]
+        # drush_module_enable(array('CiviCRM')); // [ML]
 
         drush_log(dt("CiviCRM installed."), 'ok');
 /*
@@ -293,13 +312,10 @@ function _civicrm_install_db( $dbuser, $dbpass, $dbhost, $dbname,
     drush_log(dt("CiviCRM database loaded successfully."), 'ok');
 }
 
-function _civicrm_create_files_dirs( ) {
+function _civicrm_create_files_dirs( $civicrmInstallerHelper, $modPath ) {
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT' );
     $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE );
     
-    // include civicrm installer helper file
-    $civicrmInstallerHelper = "$drupalRoot/$siteRoot/modules/civicrm/install/civicrm.php";
-$civicrmInstallerHelper = "$drupalRoot/sites/all/modules/civicrm/install/civicrm.php"; // [ML]
     if ( !file_exists($civicrmInstallerHelper) ) {
         drush_die(dt("CiviCRM installer helper file is missing."));
     }
@@ -308,8 +324,7 @@ $civicrmInstallerHelper = "$drupalRoot/sites/all/modules/civicrm/install/civicrm
     // create files/civicrm/* dirs
     global $crmPath;
     $crmPath = "$drupalRoot/$siteRoot/modules/civicrm";
-// [ML]
-// drush_log(dt('site root = ' . print_r(drush_get_context('alias'), 1)));
+// [ML] provision_civicrm hacks that need cleanup
 $site_alias_info = drush_get_context('alias');
 $siteRoot = $site_alias_info['site_path'];
 
@@ -506,7 +521,6 @@ function civicrm_cache_clear() {
     $config->clearDBCache( );
 
     // also cleanup the templates_c directory
-    $config = CRM_Core_Config::singleton( );
     $config->cleanup( 1 , false );
 
     // also cleanup the session object
@@ -698,6 +712,11 @@ function civicrm_restore() {
 }
 
 function drush_civicrm_civimail_cron() {
+    civicrm_api('Mailing','Process',array('version' => 3));
+}
+
+// Support for CiviCRM <= 4.1
+function drush_civicrm_civimail_cron_old() {
     _civicrm_init();
 
     $_REQUEST['name'] = drush_get_option('civicrm_cron_username', NULL);
@@ -722,14 +741,9 @@ function drush_civicrm_civimail_cron() {
     $config->configAndLogDir = $config->configAndLogDir . 'drush/';
 
     include 'bin/civimail.cronjob.php';
-
-/*
-    $_GET['q'] = 'civicrm/mailing/queue';
-    $_GET['reset'] = '1';
-    menu_execute_active_handler();
-*/
 }
 
+// TODO: needs testing on CiviCRM >= 4.1 (port to new cron)
 function drush_civicrm_updatemembershiprecord_cron() {
   _civicrm_init();
 
@@ -892,6 +906,15 @@ function _civicrm_init( ) {
         drush_die(dt('Could not locate CiviCRM codebase. Make sure CiviCRM settings file has correct information.'));
     }
 
+    // autoload
+    if (FALSE && module_exists('xautoload')) {
+        _xautoload_finder()->registerPrefixDeep('CRM', 'CRM');
+    } else {
+        require_once $civicrm_root . '/CRM/Core/ClassLoader.php';
+        $classLoader = new CRM_Core_ClassLoader();
+        $classLoader->register();
+    }
+
     // also initialize config object
     require_once 'CRM/Core/Config.php';
     $config = CRM_Core_Config::singleton( );
@@ -909,4 +932,52 @@ function _civicrm_get_crmpath( ) {
         }
     }
     return $crmpath;        
+}
+
+/**
+ * (Drush callback)
+ */
+function drush_civicrm_api() {
+  $DEFAULTS = array('version' => 3);
+
+  $args = func_get_args();
+  list ($entity,$action) = explode('.', $args[0]);
+  array_shift($args);
+
+  // Parse $params
+  switch (drush_get_option('in', 'args')) {
+    case 'args':
+      $params = $DEFAULTS;
+      foreach ($args as $arg) {
+        preg_match('/^([^=]+)=(.*)$/', $arg, $matches);
+        $params[ $matches[1] ] = $matches[2];
+      }
+      break;
+    case 'json':
+      $json = stream_get_contents(STDIN);
+      if (empty($json)) {
+        $params = $DEFAULTS;
+      } else {
+        $params = array_merge($DEFAULTS, json_decode($json, TRUE));
+      }
+      break;
+    default:
+      drush_set_error(dt('Unknown format: @format', array('@format' => $format)));
+      break;
+  }
+  
+  civicrm_initialize();
+  $result = civicrm_api($entity, $action, $params);
+
+  switch (drush_get_option('out', 'pretty')) {
+    case 'pretty':
+      drush_print_r($result);
+      break;
+    case 'json':
+      drush_print(json_encode($result));
+      break;
+    default:
+      drush_set_error(dt('Unknown format: @format', array('@format' => $format)));
+      break;
+  }
 }
