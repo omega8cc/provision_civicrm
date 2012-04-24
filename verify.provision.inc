@@ -125,13 +125,19 @@ function drush_civicrm_post_provision_verify($url = NULL) {
 
 /**
  * CiviCRM database upgrade
- * Code duplicated from the CiviCRM drush module, but adapted
- * so that is it easier to check the result.
+ *
+ * Code forked from the CiviCRM drush module
+ * Adapted to check the upgrade result and support multiple CiviCRM versions.
  */
 function _provision_civicrm_upgradedb() {
-  drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb()"));
+  drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb(), calling _civicrm_init()"));
 
+  if (! defined('CIVICRM_UPGRADE_ACTIVE')) { 
+    define('CIVICRM_UPGRADE_ACTIVE', 1); 
+  }
   _civicrm_init();
+
+  drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb(), _civicrm_init() worked, setting up environment."));
 
   $_POST['upgrade'] = 1;
   $_GET['q'] = 'civicrm/upgrade';
@@ -141,10 +147,25 @@ function _provision_civicrm_upgradedb() {
   // log in a sub-directory specific for drush otherwise we may have permission
   // issues on the log file (if it has been created by the web server).
   $config = CRM_Core_Config::singleton( );
+
   $config->configAndLogDir = $config->configAndLogDir . 'drush/';
+  $exists = provision_file()->mkdir($config->configAndLogDir)
+    ->succeed($name . ' path @path has been created.')
+    ->fail($name . ' path @path could not be created.', 'DRUSH_PERM_ERROR')
+    ->status();
+
   $config->templateCompileDir = $config->templateCompileDir . 'drush/';
+  $exists = provision_file()->mkdir($config->templateCompileDir)
+    ->succeed($name . ' path @path has been created.')
+    ->fail($name . ' path @path could not be created.', 'DRUSH_PERM_ERROR')
+    ->status();
+
+  drush_log(dt("CiviCRM: going to write logs in !dir", array('!dir' => $config->configAndLogDir)));
+  drush_log(dt("CiviCRM: going to write templates in !dir", array('!dir' => $config->templateCompileDir)));
 
   $template =& CRM_Core_Smarty::singleton( );
+
+  drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb(), _civicrm_init() worked, comparing code and schema versions."));
 
   require_once 'CRM/Utils/System.php';
   require_once 'CRM/Core/BAO/Domain.php';
@@ -166,11 +187,21 @@ function _provision_civicrm_upgradedb() {
     drush_log(dt("CiviCRM: Starting with upgrade .."));
 
     require_once( 'CRM/Upgrade/Page/Upgrade.php' );
-    $upgrade =& new CRM_Upgrade_Page_Upgrade( );
-    ob_start(); // to suppress html output /w source code.
-    $upgrade->run( );
-    $result = $template->get_template_vars('message'); // capture the required message.
-    ob_end_clean();
+
+    if ($codeVer >= 4.1) {
+      $upgrade = new CRM_Upgrade_Page_Upgrade( );
+      $upgrade->setPrint(true);
+      ob_start(); // to suppress html output /w source code.
+      $upgrade->run( );
+      $result = $template->get_template_vars('message'); // capture the required message.
+    }
+    else {
+      $upgrade =& new CRM_Upgrade_Page_Upgrade( );
+      ob_start(); // to suppress html output /w source code.
+      $upgrade->run( );
+      $result = $template->get_template_vars('message'); // capture the required message.
+      ob_end_clean();
+    }
 
     if (preg_match('/' . ts('CiviCRM upgrade was successful.') . '/', $result)) {
       drush_log(dt("CiviCRM: @result", array('@result' => $result)), 'ok');
@@ -194,6 +225,11 @@ function _provision_civicrm_upgradedb() {
  * need to maintain this type of forked code. TODO FIXME
  */
 function _provision_civicrm_do_site_move($defaultValues = array()) {
+  // See CRM_Core_Config::isUpgradeMode() for more information
+  if (! defined('CIVICRM_UPGRADE_ACTIVE')) {
+    define('CIVICRM_UPGRADE_ACTIVE', 1);
+  }
+
   //
   // from drush civicrm_config_update()
   //
@@ -212,15 +248,17 @@ function _provision_civicrm_do_site_move($defaultValues = array()) {
   }
 
   require_once 'CRM/Core/I18n.php';
+  require_once 'CRM/Core/BAO/ConfigSetting.php';
 
   //
   // from doSiteMove
   //
 
   $moveStatus = ts('Beginning site move process...') . '<br />';
+
   // get the current and guessed values
-  list( $oldURL, $oldDir, $oldSiteName, $oldSiteRoot ) = CRM_Core_BAO_Setting::getConfigSettings( );
-  list( $newURL, $newDir, $newSiteName, $newSiteRoot ) = CRM_Core_BAO_Setting::getBestGuessSettings( );
+  list($oldURL, $oldDir, $oldSiteName, $oldSiteRoot) = provision_civicrm_get_config_settings();
+  list($newURL, $newDir, $newSiteName, $newSiteRoot) = provision_civicrm_get_best_guess_settings();
 
   require_once 'CRM/Utils/Request.php';
 
