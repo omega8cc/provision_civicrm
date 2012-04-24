@@ -35,6 +35,7 @@
 
 // $Id: example.drush.inc,v 1.5 2009/09/30 13:15:54 weitzman Exp $
 
+
 /**
  * @file
  *   Example drush command.
@@ -51,12 +52,12 @@
  * Implementation of hook_drush_command().
  *
  * In this hook, you specify which commands your
- * drush module makes available, what it does and 
+ * drush module makes available, what it does and
  * description.
  *
- * Notice how this structure closely resembles how 
+ * Notice how this structure closely resembles how
  * you define menu hooks.
- * 
+ *
  * @See drush_parse_command() for a list of recognized keys.
  *
  * @return
@@ -404,19 +405,19 @@ $siteRoot = $site_alias_info['site_path'];
  *   A string with the help text for your command.
  */
 function civicrm_drush_help($section) {
-    switch ($section) {
+  switch ($section) {
     case 'drush:civicrm-upgrade-db':
-        return dt("Run civicrm/upgrade?reset=1 just as a web browser would.");
+      return dt("Run civicrm/upgrade?reset=1 just as a web browser would.");
     case 'drush:civicrm-update-cfg':
-        return dt("Update config_backend to correct config settings, especially when the CiviCRM site has been cloned / migrated.");
+      return dt("Update config_backend to correct config settings, especially when the CiviCRM site has been cloned / migrated.");
     case 'drush:civicrm-cache-clear':
-        return dt("Clear all CiviCRM database and smarty caches.");
+      return dt("Clear all CiviCRM database and smarty caches.");
     case 'drush:civicrm-upgrade':
-        return dt("Take backups, replace CiviCRM codebase with new specified tarfile and upgrade database by executing the CiviCRM upgrade process - civicrm/upgrade?reset=1. Use civicrm-restore to revert to previous state in case anything goes wrong.");
+      return dt("Take backups, replace CiviCRM codebase with new specified tarfile and upgrade database by executing the CiviCRM upgrade process - civicrm/upgrade?reset=1. Use civicrm-restore to revert to previous state in case anything goes wrong.");
     case 'drush:civicrm-restore':
-        return dt("Restore CiviCRM codebase and database back from the specified backup directory.");
+      return dt("Restore CiviCRM codebase and database back from the specified backup directory.");
     case 'drush:civicrm-rest':
-        return dt("Rest interface for accessing CiviCRM APIs. It can return xml or json formatted data.");
+      return dt("Rest interface for accessing CiviCRM APIs. It can return xml or json formatted data.");
     case 'drush:civicrm-sql-conf':
       return dt('Show civicrm database connection details.');
     case 'drush:civicrm-sql-connect':
@@ -427,7 +428,7 @@ function civicrm_drush_help($section) {
       return dt('Prints the whole CiviCRM database to STDOUT or save to a file.');
     case 'drush:civicrm-sql-query':
       return dt("Usage: drush [options] civicrm-sql-query <query>...\n<query> is a SQL statement, which can alternatively be passed via STDIN. Any additional arguments are passed to the mysql command directly.");
-    }
+  }
 }
 
 /**
@@ -878,42 +879,52 @@ function _civicrm_dsn_init( $reset = false ) {
     return $dbUrl;
 }
 
-function _civicrm_dsn_close( ) {
-    $globalDbUrl = _civicrm_dsn_init( true );
-    if ( $globalDbUrl ) {
-        if (drush_drupal_major_version() >= 7) {
-            $database = drush_get_option('database', 'default');
-            $target = drush_get_option('target', 'default');
-            $GLOBALS['databases'][$database][$target] = $globalDbUrl;
-        } else {
-            $GLOBALS['db_url'] = $globalDbUrl;
-        }
+function _civicrm_dsn_close() {
+  $globalDbUrl = _civicrm_dsn_init(TRUE);
+  if ($globalDbUrl) {
+    if (drush_drupal_major_version() >= 7) {
+      $database = drush_get_option('database', 'default');
+      $target = drush_get_option('target', 'default');
+      $GLOBALS['databases'][$database][$target] = $globalDbUrl;
     }
+    else {
+      $GLOBALS['db_url'] = $globalDbUrl;
+    }
+  }
 }
 
-function _civicrm_init( ) {
-    static $init = null;
+function _civicrm_init() {
+  static $init = NULL;
 
-    if ( $init ) return $init; // return if already initialized
+  // return if already initialized
+  if ($init) {
+    return $init;
+  }
 
-    global $cmsPath;
-    $cmsPath = $drupal_root = drush_get_context('DRUSH_DRUPAL_ROOT');
-    $site_root   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
-    $civicrmSettingsFile = "$drupal_root/$site_root/civicrm.settings.php";
+  global $cmsPath;
+  $cmsPath             = $drupal_root = drush_get_context('DRUSH_DRUPAL_ROOT');
+  $site_root           = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
+  $civicrmSettingsFile = "$drupal_root/$site_root/civicrm.settings.php";
 
-    if ( !file_exists( $civicrmSettingsFile ) ) {
-        $sites_subdir = drush_get_option('sites-subdir', 'default');
-        $civicrmSettingsFile = "$drupal_root/sites/$sites_subdir/civicrm.settings.php";
-        if ( !file_exists( $civicrmSettingsFile ) ) {
-            drush_die(dt("Could not locate civicrm settings file."));
-        }
+  if (!file_exists($civicrmSettingsFile)) {
+    $sites_subdir = drush_get_option('sites-subdir', 'default');
+    $civicrmSettingsFile = "$drupal_root/sites/$sites_subdir/civicrm.settings.php";
+    if (!file_exists($civicrmSettingsFile)) {
+      drush_die(dt("Could not locate civicrm settings file."));
     }
-    include_once $civicrmSettingsFile; // include settings file
-    global $civicrm_root;
-    if ( ! is_dir($civicrm_root) ) {
-        drush_die(dt('Could not locate CiviCRM codebase. Make sure CiviCRM settings file has correct information.'));
-    }
+  }
+  // include settings file
+  include_once $civicrmSettingsFile;
+  global $civicrm_root;
+  if (!is_dir($civicrm_root)) {
+    drush_die(dt('Could not locate CiviCRM codebase. Make sure CiviCRM settings file has correct information.'));
+  }
 
+  // Autoload was deprecated in 4.1 (test if we need it with < 4.1?)
+  require_once 'CRM/Utils/System.php';
+  $codeVer = CRM_Utils_System::version();
+
+  if (substr($codeVer, 0, 2) < '4.1') {
     // autoload
     if (FALSE && module_exists('xautoload')) {
         _xautoload_finder()->registerPrefixDeep('CRM', 'CRM');
@@ -922,24 +933,25 @@ function _civicrm_init( ) {
         $classLoader = new CRM_Core_ClassLoader();
         $classLoader->register();
     }
+  }
 
-    // also initialize config object
-    require_once 'CRM/Core/Config.php';
-    $config = CRM_Core_Config::singleton( );
+  // also initialize config object
+  require_once 'CRM/Core/Config.php';
+  $config = &CRM_Core_Config::singleton();
 
-    $init = true;
-    return $init;
+  $init = TRUE;
+  return $init;
 }
 
-function _civicrm_get_crmpath( ) {
-    
-    if ( !$crmpath = drush_get_option('destination', false) ) {
-        $crmpath = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE).'/modules/'; 
-        if ( !is_dir( $crmpath ) ) {
-            $crmpath = "sites/all/modules";
-        }
+function _civicrm_get_crmpath() {
+
+  if (!$crmpath = drush_get_option('destination', FALSE)) {
+    $crmpath = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE) . '/modules/';
+    if (!is_dir($crmpath)) {
+      $crmpath = "sites/all/modules";
     }
-    return $crmpath;        
+  }
+  return $crmpath;
 }
 
 /**
