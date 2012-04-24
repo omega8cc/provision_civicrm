@@ -149,19 +149,30 @@ function _provision_civicrm_upgradedb() {
   $config = CRM_Core_Config::singleton( );
 
   $config->configAndLogDir = $config->configAndLogDir . 'drush/';
-  $exists = provision_file()->mkdir($config->configAndLogDir)
-    ->succeed($name . ' path @path has been created.')
-    ->fail($name . ' path @path could not be created.', 'DRUSH_PERM_ERROR')
+
+  $exists = provision_file()->exists($config->configAndLogDir)
+    ->succeed('CiviCRM: @path exists.')
     ->status();
+
+  if (! $exists) {
+    provision_file()->mkdir($config->configAndLogDir)
+      ->succeed('CiviCRM: log path @path has been created.')
+      ->fail('CiviCRM: log path @path could not be created.', 'DRUSH_PERM_ERROR')
+      ->status();
+  }
 
   $config->templateCompileDir = $config->templateCompileDir . 'drush/';
-  $exists = provision_file()->mkdir($config->templateCompileDir)
-    ->succeed($name . ' path @path has been created.')
-    ->fail($name . ' path @path could not be created.', 'DRUSH_PERM_ERROR')
+
+  $exists = provision_file()->exists($config->templateCompileDir)
+    ->succeed('CiviCRM: @path exists.')
     ->status();
 
-  drush_log(dt("CiviCRM: going to write logs in !dir", array('!dir' => $config->configAndLogDir)));
-  drush_log(dt("CiviCRM: going to write templates in !dir", array('!dir' => $config->templateCompileDir)));
+  if (! $exists) {
+    $exists = provision_file()->mkdir($config->templateCompileDir)
+      ->succeed('CiviCRM: compiled template @path has been created.')
+      ->fail('CiviCRM: compiled templace @path could not be created.', 'DRUSH_PERM_ERROR')
+      ->status();
+  }
 
   $template =& CRM_Core_Smarty::singleton( );
 
