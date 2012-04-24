@@ -218,17 +218,8 @@ function _provision_civicrm_drush_options($op = 'unknown') {
  */
 function _provision_civicrm_is_site_context($op = 'unkown') {
   if (d()->type == 'site') {
-    // Check if the CiviCRM code base is present in the platform
-    // Note: after putting the code there, you need to verify
-    // the platform.
-    $packages = drush_get_option('packages', array('modules' => NULL));
-    $modules = $packages['modules'];
-    if (is_array($modules) && array_key_exists('civicrm', $modules)) {
-      return TRUE;
-    }
-    else {
-      return FALSE;
-    }
+    $crmpath = _provision_civicrm_get_package_path();
+    return ($crmpath ? TRUE : FALSE);
   }
   return FALSE;
 }
@@ -238,30 +229,49 @@ function _provision_civicrm_is_site_context($op = 'unkown') {
  * Ex: /var/aegir/platforms/[...]/sites/all/modules/civicrm
  */
 function _provision_civicrm_get_package_path() {
-  $packages = drush_get_option('packages', NULL);
-  $crmpath  = '';
+  $module = _provision_civicrm_get_package_info();
 
-  if (is_array($packages)) {
-    if (is_array($packages['modules'])) {
-      // Most likely in a site context
-      if (array_key_exists('civicrm', $packages['modules'])) {
-        $crmpath = $packages['modules']['civicrm']['filename'];
-      }
-    }
-    elseif (is_array($packages['base'])) {
-      // Most likely during the civicrm installation
-      if (array_key_exists('civicrm', $packages['base']['modules'])) {
-        $crmpath = $packages['base']['modules']['civicrm']['filename'];
-      }
-    }
-  }
-
-  if ($crmpath) {
+  if ($module) {
     // Get the parent directory of the module, which is in civicrm/drupal/civicrm.module
-    return dirname(dirname($crmpath));
+    $crmpath = dirname(dirname($module['filename']));
+    drush_log(dt('CiviCRM: civicrm is in @path', array('@path' => $crmpath)));
+    return $crmpath;
   }
 
   return FALSE;
+}
+
+/**
+ * Get the CiviCRM module base information (filename, basename, version, etc)
+ */
+function _provision_civicrm_get_package_info() {
+  $module = NULL;
+
+  // Check if the CiviCRM code base is present in the platform
+  // Note: after putting the code there, you need to verify
+  // the platform.
+  $packages = drush_get_option('packages', array('modules' => NULL));
+  $profile = drush_get_option('profile', NULL);
+
+  if (isset($packages['modules']) && isset($packages['modules']['civicrm'])) {
+    drush_log(dt('CiviCRM: found civicrm in packages'));
+    $module = $packages['modules']['civicrm'];
+  }
+  elseif (isset($packages['sites-all']) && isset($packages['sites-all']['modules']) && isset($packages['sites-all']['modules']['civicrm'])) {
+    $module = $packages['sites-all']['modules']['civicrm'];
+    drush_log(dt('CiviCRM: found civicrm in packages of sites-all modules'));
+  }
+  elseif ($profile && isset($packages['profiles'][$profile]['modules']) && isset($packages['profiles'][$profile]['modules']['civicrm'])) {
+    $module = $packages['profiles'][$profile]['modules']['civicrm'];
+    drush_log(dt('CiviCRM: found civicrm in packages of @profile profile modules', array('@profile' => $profile)));
+  }
+  else {
+    // drush_log(dt('CiviCRM: civicrm not found in packages ' . print_r($packages, 1)));
+  }
+
+  // drush_log('CiviCRM: MODULE = ' . print_r($module, 1));
+
+  return $module;
 }
 
 /**

@@ -19,14 +19,15 @@ function drush_civicrm_post_provision_install($url = null) {
     // Check if the CiviCRM code base is present in the platform
     // Note: after putting the code there, you must verify the platform.
     if (! _provision_civicrm_get_package_path()) {
+      // drush_log(dt('CiviCRM: not found in package path, skipping installation.'));
       return;
     }
 
     // Quietly exit if we're trying to install an old/unsupported CiviCRM
     // Don't completely fail, the user can install manually (for migrations/upgrades).
-    $packages = drush_get_option('packages', array('modules' => NULL));
-    if ($packages['base']['modules']['civicrm']['version'] < 3) {
-      drush_log(dt('CiviCRM: CiviCRM version is not supported, too old: ' . check_plain($packages['base']['modules']['civicrm']['version'])));
+    $module = _provision_civicrm_get_package_info();
+    if ($module['version'] < 3) {
+      drush_log(dt('CiviCRM: CiviCRM version is not supported, too old: ' . check_plain($module['version'])));
       return;
     }
 
