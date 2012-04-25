@@ -259,7 +259,6 @@ function _provision_civicrm_do_site_move($defaultValues = array()) {
   }
 
   require_once 'CRM/Core/I18n.php';
-  require_once 'CRM/Core/BAO/ConfigSetting.php';
 
   //
   // from doSiteMove
