@@ -923,7 +923,7 @@ function _civicrm_init() {
   require_once 'CRM/Utils/System.php';
   $codeVer = CRM_Utils_System::version();
 
-  if (substr($codeVer, 0, 3) < '4.1') {
+  if (substr($codeVer, 0, 3) >= '4.2') {
     // autoload
     if (FALSE && module_exists('xautoload')) {
         _xautoload_finder()->registerPrefixDeep('CRM', 'CRM');
