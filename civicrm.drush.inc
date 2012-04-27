@@ -633,7 +633,9 @@ function drush_civicrm_upgrade() {
     drush_log(dt('3. Tarfile unpacked.'), 'ok');
 
     drush_log(dt("4. "));
-    civicrm_upgrade_db();
+    if (drush_civicrm_upgrade_db_validate()) {
+        drush_civicrm_upgrade_db();
+    }
     drush_log(dt("\nProcess completed."), 'completed');
 }
 
