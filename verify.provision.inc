@@ -119,7 +119,7 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     // In general we had so many permissions issues, we want to be extra-pedantic.
     _provision_civicrm_fixpermissions();
 
-    civicrm_cache_clear();
+    drush_civicrm_cache_clear();
   }
 }
 

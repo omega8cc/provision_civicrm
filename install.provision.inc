@@ -49,7 +49,9 @@ function drush_civicrm_post_provision_install($url = null) {
     drush_set_option('civicrm_sitekey', $sitekey, 'site');
 
     // Generates the civicrm.settings.php
-    civicrm_pkg_install();
+    if (drush_civicrm_install_validate()) {
+      drush_civicrm_install();
+    }
 
     // Install the DB, not sure why the drush module is not doing it
     global $crmPath;
