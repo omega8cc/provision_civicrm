@@ -147,34 +147,42 @@ function civicrm_drush_command() {
               array('--query' => 'Query part of url. Refer CiviCRM wiki doc for more details.'),
               'aliases' => array('cvr'),
               );
-    $items['civicrm-sql-conf'] =
-        array('description' => 'Print CiviCRM database connection details.',
-              );
-    $items['civicrm-sql-connect'] =
-        array('description' => 'A string for connecting to the CiviCRM DB.',
-              );
-    $items['civicrm-sql-dump'] =
-        array('description' => 'Exports the CiviCRM DB as SQL using mysqldump.',
-              'examples'    =>
-              array('drush civicrm-sql-dump --result-file=../CiviCRM.sql' =>
-                    'Save SQL dump to the directory above Drupal root.',
-                    ),
-              'options'     =>
-              array('--result-file' => 'Save to a file.'),
-              );
-    $items['civicrm-sql-query'] =
-        array('description' => 'Execute a query against the CiviCRM database.',
-              'examples'    =>
-              array('drush civicrm-sql-query "SELECT * FROM civicrm_contact WHERE id=1"' =>
-                    'Browse user record',
-                    ),
-              'arguments'   =>
-              array('query' => 'A SQL query. Mandatory.',
-                    ),
-              );
-    $items['civicrm-sql-cli'] =
-        array('description' => "Open a SQL command-line interface using CiviCRM's credentials.",
-              );
+    $items['civicrm-sql-conf'] = array(
+      'description' => 'Print CiviCRM database connection details.',
+    );
+    $items['civicrm-sql-connect'] = array(
+      // explicit callback declaration and non-standard name to avoid collision with "sql-connect"
+      'callback' => 'drush_civicrm_sqlconnect',
+      'description' => 'A string for connecting to the CiviCRM DB.',
+    );
+    $items['civicrm-sql-dump'] = array(
+      // explicit callback declaration and non-standard name to avoid collision with "sql-dump"
+      'callback' => 'drush_civicrm_sqldump',
+      'description' => 'Exports the CiviCRM DB as SQL using mysqldump.',
+      'examples'    => array(
+        'drush civicrm-sql-dump --result-file=../CiviCRM.sql' => 'Save SQL dump to the directory above Drupal root.',
+      ),
+      'options'     => array(
+        '--result-file' => 'Save to a file.',
+      ),
+    );
+    $items['civicrm-sql-query'] = array(
+      // explicit callback declaration and non-standard name to avoid collision with "sql-dump"
+      'callback'    => 'drush_civicrm_sqlquery',
+      'description' => 'Execute a query against the CiviCRM database.',
+      'examples'    => array(
+        'drush civicrm-sql-query "SELECT * FROM civicrm_contact WHERE id=1"' => 'Browse user record',
+      ),
+      'arguments'   => array(
+        'query' => 'A SQL query. Mandatory.',
+      ),
+    );
+    $items['civicrm-sql-cli'] = array(
+      // explicit callback declaration and non-standard name to avoid collision with "sql-cli"
+      'callback' => 'drush_civicrm_sqlcli',
+      'description' => "Open a SQL command-line interface using CiviCRM's credentials.",
+      'aliases' => array('cvsqlc'),
+    );
     $items['civicrm-process-mail-queue'] =
         array('description' => "Process pending CiviMail mailing jobs.",
               'examples'    =>
@@ -841,11 +849,11 @@ function drush_civicrm_rest() {
     echo $rest->run( $config );
 }
 
-function drush_civicrm_sql_dump_validate() {
+function drush_civicrm_sqldump_validate() {
   return _civicrm_dsn_init();
 }
 
-function drush_civicrm_sql_dump() {
+function drush_civicrm_sqldump() {
   drush_sql_dump_execute();
   _civicrm_dsn_close();
 }
@@ -859,34 +867,34 @@ function drush_civicrm_sql_conf() {
   _civicrm_dsn_close();
 }
 
-function drush_civicrm_sql_connect_validate() {
+function drush_civicrm_sqlconnect_validate() {
   return _civicrm_dsn_init();
 }
 
-function drush_civicrm_sql_connect() {
+function drush_civicrm_sqlconnect() {
   drush_sql_connect();
   _civicrm_dsn_close();
 }
 
-function drush_civicrm_sql_query_validate() {
+function drush_civicrm_sqlquery_validate() {
   _civicrm_dsn_init();
 }
 
-function drush_civicrm_sql_query($query) {
+function drush_civicrm_sqlquery($query) {
   drush_sql_query( $query );
   _civicrm_dsn_close();
 }
 
-function drush_civicrm_sql_cli_validate() {
+function drush_civicrm_sqlcli_validate() {
   return _civicrm_dsn_init();
 }
 
-function drush_civicrm_sql_cli() {
+function drush_civicrm_sqlcli() {
   drush_sql_cli();
   _civicrm_dsn_close();
 }
 
-function _civicrm_dsn_init( $reset = false ) {
+function _civicrm_dsn_init($reset = FALSE) {
     static $globalDbUrl = null;
 
     if (!_civicrm_init()) {
