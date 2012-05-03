@@ -633,7 +633,7 @@ function drush_civicrm_upgrade() {
     drush_log(dt("\n1. Code backed up."), 'ok');
 
     drush_set_option('result-file', $backup_target . '.sql');
-    civicrm_sql_dump();
+    drush_civicrm_sqldump();
     drush_log(dt('2. Database backed up.'), 'ok');
 
     // Decompress
@@ -724,8 +724,7 @@ function drush_civicrm_restore() {
 
     // 2. backup, drop and create database
     drush_set_option('result-file', $restore_backup_dir . '/civicrm.sql');
-    civicrm_sql_dump();
-    _civicrm_dsn_init();// reinitialize dsn
+    drush_civicrm_sqldump();
 
     drush_log(dt('Database backed up.'), 'ok');
 
