@@ -944,8 +944,17 @@ function _civicrm_dsn_close() {
   }
 }
 
-function _civicrm_init() {
-  // TODO: Why can't this be replaced by civicrm_initialize();?
+/**
+ * Initializes the CiviCRM environment and configuration.
+ * TODO: document why we can't call civicrm_initialize() directly.
+ *
+ * @param  bool fail
+ *   If true, will halt drush. Otherwise, return false but do not interrupt.
+ *
+ * @return bool
+ *   Returns TRUE if CiviCRM was initialized.
+ */
+function _civicrm_init($fail = TRUE) {
   static $init = NULL;
 
   // return if already initialized
@@ -962,7 +971,12 @@ function _civicrm_init() {
     $sites_subdir = drush_get_option('sites-subdir', 'default');
     $civicrmSettingsFile = "$drupal_root/sites/$sites_subdir/civicrm.settings.php";
     if (!file_exists($civicrmSettingsFile)) {
-            return drush_set_error('CIVICRM_INIT_SETTINGS_NOT_FOUND', dt('Could not locate civicrm settings file.'));
+      if ($fail) {
+        return drush_set_error('CIVICRM_INIT_SETTINGS_NOT_FOUND', dt('Could not locate civicrm settings file.'));
+      }
+      else {
+        return FALSE;
+      }
     }
   }
   // include settings file
