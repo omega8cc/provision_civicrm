@@ -534,13 +534,19 @@ function drush_civicrm_update_cfg() {
  * Implements hook_drush_cache_clear.
  */
 function civicrm_drush_cache_clear(&$types) {
-  $types['civicrm'] = 'drush_civicrm_cache_clear';
+  if (_civicrm_init(FALSE)) {
+    $types['civicrm'] = 'drush_civicrm_cacheclear';
+  }
 }
 
 /**
  * Cache clear callback
+ *
+ * Warning: do not name drush_civicrm_cache_clear() otherwise it will
+ * conflict with hook_drush_cache_clear() and be called systematically
+ * when "drush cc" is called.
  */
-function drush_civicrm_cache_clear() {
+function drush_civicrm_cacheclear() {
     _civicrm_init();
 
     require_once 'CRM/Core/Config.php';
@@ -555,8 +561,6 @@ function drush_civicrm_cache_clear() {
     // also cleanup the session object
     $session = CRM_Core_Session::singleton( );
     $session->reset(1);
-
-    drush_log(dt('Cache cleared.'), 'ok');
 }
 
 function drush_civicrm_enable_debug_validate() {
