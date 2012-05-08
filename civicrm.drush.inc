@@ -407,7 +407,7 @@ $siteRoot = $site_alias_info['site_path'];
     $configFile = "$siteRoot/civicrm.settings.php"; // [ML] removed $drupalRoot
     civicrm_write_file( $configFile, $str );
     @drush_op('chmod',"$configFile", 0644);
-    drush_log(dt("Settings file generated: $configFile"), 'ok');
+    drush_log(dt("Settings file generated: !file", array('!file' => $configFile)), 'ok');
 }
 
 /**
