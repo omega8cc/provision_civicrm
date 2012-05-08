@@ -221,11 +221,13 @@ function drush_civicrm_install_validate() {
     return drush_set_error('CIVICRM_INSTALL_DB_NAME_NOT_SPECIFIED', dt('CiviCRM database name not specified.'));
   }
   if (!drush_get_option('tarfile', false)) {
-    return drush_set_error('CIVICRM_INSTALL_TARFILE_NOT_SPECIFIED', dt('CiviCRM tarfile not specified.'));
+    # return drush_set_error('CIVICRM_INSTALL_TARFILE_NOT_SPECIFIED', dt('CiviCRM tarfile not specified.'));
   }
   if (drush_get_option('lang', FALSE) && !drush_get_option('langtarfile', false)) {
     return drush_set_error('CIVICRM_INSTALL_LANGTARFILE_NOT_SPECIFIED', dt('CiviCRM language tarfile not specified.'));
   }
+
+  return TRUE;
 }
 
 function drush_civicrm_install() {
@@ -678,6 +680,8 @@ function drush_civicrm_restore_validate() {
     } else if ( !file_exists("$code_dir/civicrm-version.txt") ) {
         return drush_set_error('CIVICRM_RESTORE_DIR_NOT_VALID', dt('civicrm directory inside restore-dir, doesn\'t look to be a valid civicrm codebase.'));
     }
+
+    return TRUE;
 }
 
 function drush_civicrm_restore() {
