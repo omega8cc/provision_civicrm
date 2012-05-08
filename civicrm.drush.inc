@@ -346,6 +346,8 @@ $siteRoot = $site_alias_info['site_path'];
 
 civicrm_setup("$siteRoot/files"); // [ML]
 //    civicrm_setup("$drupalRoot/$siteRoot/files");
+
+    return TRUE;
 }
 
 // generates civicrm.settings.php file
