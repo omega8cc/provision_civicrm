@@ -428,8 +428,6 @@ function civicrm_drush_help($section) {
       return dt("Run civicrm/upgrade?reset=1 just as a web browser would.");
     case 'drush:civicrm-update-cfg':
       return dt("Update config_backend to correct config settings, especially when the CiviCRM site has been cloned / migrated.");
-    case 'drush:civicrm-cache-clear':
-      return dt("Clear all CiviCRM database and smarty caches.");
     case 'drush:civicrm-upgrade':
       return dt("Take backups, replace CiviCRM codebase with new specified tarfile and upgrade database by executing the CiviCRM upgrade process - civicrm/upgrade?reset=1. Use civicrm-restore to revert to previous state in case anything goes wrong.");
     case 'drush:civicrm-restore':
