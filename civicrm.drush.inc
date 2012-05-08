@@ -656,6 +656,7 @@ function drush_civicrm_upgrade() {
     drush_log(dt('3. Tarfile unpacked.'), 'ok');
 
     drush_log(dt("4. "));
+
     if (drush_civicrm_upgrade_db_validate()) {
         drush_civicrm_upgrade_db();
     }
@@ -998,24 +999,19 @@ function _civicrm_init($fail = TRUE) {
     return drush_set_error('CIVICRM_INIT_CODEBASE_NOT_FOUND', dt('Could not locate CiviCRM codebase. Make sure CiviCRM settings file has correct information.'));
   }
 
-  // Autoload was deprecated in 4.1 (test if we need it with < 4.1?)
+  // Autoload was added in 4.2
   require_once 'CRM/Utils/System.php';
   $codeVer = CRM_Utils_System::version();
 
   if (substr($codeVer, 0, 3) >= '4.2') {
-    // autoload
-    if (FALSE && module_exists('xautoload')) {
-        _xautoload_finder()->registerPrefixDeep('CRM', 'CRM');
-    } else {
-        require_once $civicrm_root . '/CRM/Core/ClassLoader.php';
-        $classLoader = new CRM_Core_ClassLoader();
-        $classLoader->register();
-    }
+    require_once $civicrm_root . '/CRM/Core/ClassLoader.php';
+    $classLoader = new CRM_Core_ClassLoader();
+    $classLoader->register();
   }
 
   // also initialize config object
   require_once 'CRM/Core/Config.php';
-  $config = &CRM_Core_Config::singleton();
+  $config = CRM_Core_Config::singleton();
 
   $init = TRUE;
   return $init;
