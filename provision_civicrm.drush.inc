@@ -261,6 +261,10 @@ function _provision_civicrm_get_package_info() {
     $module = $packages['sites-all']['modules']['civicrm'];
     drush_log(dt('CiviCRM: found civicrm in packages of sites-all modules'));
   }
+  elseif (isset($packages['base']) && isset($packages['base']['modules']) && isset($packages['base']['modules']['civicrm'])) {
+    $module = $packages['base']['modules']['civicrm'];
+    drush_log(dt('CiviCRM: found civicrm in packages of base modules'));
+  }
   elseif ($profile && isset($packages['profiles'][$profile]['modules']) && isset($packages['profiles'][$profile]['modules']['civicrm'])) {
     $module = $packages['profiles'][$profile]['modules']['civicrm'];
     drush_log(dt('CiviCRM: found civicrm in packages of @profile profile modules', array('@profile' => $profile)));
