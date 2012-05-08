@@ -43,7 +43,7 @@ function drush_civicrm_post_provision_install($url = null) {
     drush_set_option('dbhost', $db_host);
     drush_set_option('dbname', $db_name);
 
-    $sitekey = md5(uniqid( '', true ) . $siteRoot);
+    $sitekey = md5(uniqid( '', true ) . $db_user);
 
     drush_set_option('sitekey', $sitekey);
     drush_set_option('civicrm_sitekey', $sitekey, 'site');
