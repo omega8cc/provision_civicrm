@@ -177,49 +177,51 @@ function _provision_civicrm_upgradedb() {
 
   drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb(), _civicrm_init() worked, comparing code and schema versions."));
 
+  if (! drush_civicrm_upgrade_db_validate()) {
+    return FALSE; // above already does a drush_set_error
+  }
+
+  // Still need to check if the DB and code versions are the same
+  // so that we can avoid calling the upgrade on 'verify'.
   require_once 'CRM/Utils/System.php';
   require_once 'CRM/Core/BAO/Domain.php';
   $codeVer = CRM_Utils_System::version();
   $dbVer   = CRM_Core_BAO_Domain::version();
 
-  if ( !$dbVer ) {
-    drush_set_error('CiviCRM: Version information missing in civicrm database.');
-  } else if ( stripos($dbVer, 'upgrade') ) {
-    drush_set_error('CiviCRM: Database check failed - the database looks to have been partially upgraded. You may want to reload the database with the backup and try the upgrade process again.');
-  } else if ( !$codeVer ) {
-    drush_set_error('CiviCRM: Version information missing in civicrm codebase.');
-  } else if ( version_compare($codeVer, $dbVer) < 0 ) {
-    drush_set_error(dt("CiviCRM: Database is marked with an unexpected version '!dbVer' which is higher than that of codebase version '!codeVer'.", array('!dbVer' => $dbVer, '!codeVer' => $codeVer)));
-  } else if ( version_compare($codeVer, $dbVer) > 0 ) {
-    drush_log(dt("CiviCRM: Starting with v!dbVer -> v!codeVer upgrade ..",
-             array('!dbVer' => $dbVer, '!codeVer' => $codeVer)));
-
-    drush_log(dt("CiviCRM: Starting with upgrade .."));
-
-    require_once( 'CRM/Upgrade/Page/Upgrade.php' );
-
-    if ($codeVer >= 4.1) {
-      $upgrade = new CRM_Upgrade_Page_Upgrade( );
-      $upgrade->setPrint(true);
-      ob_start(); // to suppress html output /w source code.
-      $upgrade->run( );
-      $result = $template->get_template_vars('message'); // capture the required message.
-    }
-    else {
-      $upgrade =& new CRM_Upgrade_Page_Upgrade( );
-      ob_start(); // to suppress html output /w source code.
-      $upgrade->run( );
-      $result = $template->get_template_vars('message'); // capture the required message.
-      ob_end_clean();
-    }
-
-    if (preg_match('/' . ts('CiviCRM upgrade was successful.') . '/', $result)) {
-      drush_log(dt("CiviCRM: @result", array('@result' => $result)), 'ok');
-    } else {
-      drush_log(dt("CiviCRM: upgrade failed: @result", array('@result' => $result)), 'error');
-    }
-  } else {
+  if (version_compare($codeVer, $dbVer) == 0) {
     drush_log(dt("CiviCRM: no upgrade required (@codeVer = @dbVer)", array('@codeVer' => $codeVer, '@dbVer' => $dbVer)), 'ok');
+    return;
+  }
+
+  drush_log(dt("CiviCRM: Starting with upgrade .."));
+
+  require_once( 'CRM/Upgrade/Page/Upgrade.php' );
+
+  if (class_exists('CRM_Upgrade_Headless')) {
+    // Note: CRM_Upgrade_Headless introduced in 4.2 -- at the same time as class auto-loading
+    $upgradeHeadless = new CRM_Upgrade_Headless();
+    $tmp = $upgradeHeadless->run(); // FIXME Exception handling?
+    $result = $tmp['message'];
+  }
+  elseif ($codeVer >= 4.1) {
+    $upgrade = new CRM_Upgrade_Page_Upgrade( );
+    $upgrade->setPrint(true);
+    ob_start(); // to suppress html output /w source code.
+    $upgrade->run( );
+    $result = $template->get_template_vars('message'); // capture the required message.
+  }
+  else {
+    $upgrade =& new CRM_Upgrade_Page_Upgrade( );
+    ob_start(); // to suppress html output /w source code.
+    $upgrade->run( );
+    $result = $template->get_template_vars('message'); // capture the required message.
+    ob_end_clean();
+  }
+
+  if (preg_match('/' . ts('CiviCRM upgrade was successful.') . '/', $result)) {
+    drush_log(dt("CiviCRM: @result", array('@result' => $result)), 'ok');
+  } else {
+    drush_log(dt("CiviCRM: upgrade failed: @result", array('@result' => $result)), 'error');
   }
 
   drush_log(dt("CiviCRM: finished _provision_civicrm_upgradedb()"));
