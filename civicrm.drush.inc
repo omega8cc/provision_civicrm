@@ -380,13 +380,24 @@ $siteRoot = $site_alias_info['site_path'];
     }
 
     $baseUrl = !$baseUrl ? ($GLOBALS['base_url']) : ($protocol . '://' . $baseUrl);
-
     $db_spec = _drush_sql_get_db_spec();
+
+    // Check version: since 4.1, Drupal6 must be used for the UF in D6
+    // The file civicrm-version.php appeared around 4.0, so it is safe to assume
+    // that if it's not there, it's 3.x, in which case the CMS 'Drupal' is D6.
+    $cms = 'Drupal';
+
+    if (file_exists("$crmPath/civicrm-version.php")) {
+      require_once "$crmPath/civicrm-version.php";
+      $v = civicrmVersion();
+      $cms = $v['cms'];
+    }
+
     $params  = array(
                      'crmRoot'   => $crmPath,
                      'templateCompileDir' => "$siteRoot/files/civicrm/templates_c", // [ML] removed $drupalRoot
                      'frontEnd'  => 0,
-                     'cms'       => 'Drupal',
+                     'cms'       => $cms,
                      'baseURL'   => $baseUrl,
                      'dbUser'    => $dbuser,
                      'dbPass'    => $dbpass,
