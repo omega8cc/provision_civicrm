@@ -17,7 +17,6 @@
  */
 function drush_civicrm_pre_provision_verify($url = NULL) {
   if (_provision_civicrm_is_site_context()) {
-
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
     drush_set_option('civicrm_old_path', $drupalRoot);
 
@@ -119,7 +118,7 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     // In general we had so many permissions issues, we want to be extra-pedantic.
     _provision_civicrm_fixpermissions();
 
-    drush_civicrm_cache_clear();
+    drush_civicrm_cacheclear();
   }
 }
 
@@ -169,8 +168,8 @@ function _provision_civicrm_upgradedb() {
 
   if (! $exists) {
     $exists = provision_file()->mkdir($config->templateCompileDir)
-      ->succeed('CiviCRM: compiled template @path has been created.')
-      ->fail('CiviCRM: compiled templace @path could not be created.', 'DRUSH_PERM_ERROR')
+      ->succeed('CiviCRM: compiled template path @path has been created.')
+      ->fail('CiviCRM: compiled template path @path could not be created.', 'DRUSH_PERM_ERROR')
       ->status();
   }
 
