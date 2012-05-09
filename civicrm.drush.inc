@@ -1020,10 +1020,6 @@ function _civicrm_init($fail = TRUE) {
     $classLoader->register();
   }
 
-  // also initialize config object
-  require_once 'CRM/Core/Config.php';
-  $config = CRM_Core_Config::singleton();
-
   $init = TRUE;
   return $init;
 }
