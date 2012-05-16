@@ -84,7 +84,7 @@ function drush_civicrm_post_provision_install($url = null) {
 
     // Enable civicrm module before setting up civicron role,
     // as we need it to expose its permissions.
-    drush_pm_enable('civicrm');
+    module_enable(array('civicrm'));
 
     _provision_civicrm_create_civicron_user();
 
