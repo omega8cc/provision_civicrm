@@ -90,6 +90,8 @@ function drush_civicrm_post_provision_install($url = null) {
 
     // Fix some paths:
     _provision_civicrm_fixresourceurls();
+
+    drush_log(dt("CiviCRM: Finished installation."), 'ok');
   }
 }
 
