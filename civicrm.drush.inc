@@ -1206,7 +1206,9 @@ function drush_civicrm_api() {
 
   switch (drush_get_option('out', 'pretty')) {
     case 'pretty':
-      drush_print_r($result);
+      if ($result['count'] || drush_get_option('debug')) {
+        drush_print_r($result);
+      }
       break;
     case 'json':
       drush_print(json_encode($result));
