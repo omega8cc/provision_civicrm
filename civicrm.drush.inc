@@ -66,18 +66,20 @@ function civicrm_drush_command() {
     $items = array();
 
     // the key in the $items array is the name of the command.
-    $items['civicrm-api'] =
-        array('description' => 'CLI access to CiviCRM APIs. It can return pretty-printor json formatted data.',
-              'examples'    =>
-              array('drush civicrm-api contact.create first_name=John last_name=Doe contact_type=Individual' => 'Create a new contact named John Doe',
-                    'drush civicrm-api contact.create id=1 --out=json' =>  'Find/display a contact in JSON format',
-                    ),
-              'options'     =>  array(
-                  '--in' => 'Input type: "args" (command-line), "json" (STDIN)',
-                  '--out' => 'Output type: "pretty" (STDOUT), "json" (STDOUT)',
-                  ),
-              'aliases' => array('cvapi'),
-              );
+    $items['civicrm-api'] = array(
+      'description' => 'CLI access to CiviCRM APIs. It can return pretty-printor json formatted data.',
+      'examples'    => array(
+        'drush civicrm-api contact.create first_name=John last_name=Doe contact_type=Individual' => 'Create a new contact named John Doe',
+        'drush civicrm-api contact.create id=1 --out=json' =>  'Find/display a contact in JSON format',
+        'drush -u admin civicrm-api Job.process_mailing'   =>  'Run the CiviMail cronjob as the admin user.',
+        'drush -u admin civicrm-api Job.fetch_bounces'     =>  'Process the mailing bounces as the admin user.',
+      ),
+      'options'     =>  array(
+        'in' => 'Input type: "args" (command-line), "json" (STDIN)',
+        'out' => 'Output type: "pretty" (STDOUT), "json" (STDOUT)',
+      ),
+      'aliases' => array('cvapi'),
+    );
     $items['civicrm-install'] =
         array('description' => "Install a new instance of CiviCRM.",
               'options'     =>
