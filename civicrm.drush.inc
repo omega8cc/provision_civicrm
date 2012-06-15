@@ -185,24 +185,16 @@ function civicrm_drush_command() {
       'description' => "Open a SQL command-line interface using CiviCRM's credentials.",
       'aliases' => array('cvsqlc'),
     );
-    $items['civicrm-process-mail-queue'] =
-        array('description' => "Process pending CiviMail mailing jobs.",
-              'examples'    =>
-              array('drush civicrm-process-mail-queue -u admin' =>
-                    'Process CiviMail queue with admin credentials.',
-                    ),
-              );
-    $items['civicrm-member-records'] =
-        array('description' => "Run the CiviMember UpdateMembershipRecord cron (civicrm-member-records).",
-              );
-    $items['civicrm-civimail'] = 
-        array('callback'    => 'drush_civicrm_civimail_cron_old',
-              'description' => "DEPRECATED: Run the CiviMail cron (CiviCRM < 4.1).",
-              'examples'    => 
-              array('drush --uri=http://example.com civicrm-civimail -u admin -p admin -s 12345678912345678912345678' => 
-                    'Run CiviMail cron with admin credentials and site key.',
-                    ),
-              );
+    $items['civicrm-member-records'] = array(
+      'description' => "DEPRECATED: Run the CiviMember UpdateMembershipRecord cron (civicrm-member-records).",
+    );
+    $items['civicrm-civimail'] = array(
+      'callback'    => 'drush_civicrm_civimail_cron_old',
+      'description' => "DEPRECATED: Run the CiviMail cron (CiviCRM < 4.1).",
+      'examples'    => array(
+        'drush civicrm-civimail -u admin -p admin -s 12345678912345678912345678' => 'Run CiviMail cron with admin credentials and site key.',
+      ),
+    );
     $items['civicrm-csv-export'] = array(
       'callback'    => 'drush_civicrm_csv_export',
       'description' => "Command line CSV export tool.",
@@ -807,10 +799,6 @@ function drush_civicrm_restore() {
     drush_log(dt('Restore process completed.'), 'completed');
 
     _civicrm_dsn_close();
-}
-
-function drush_civicrm_civimail_cron() {
-    civicrm_api('Mailing','Process',array('version' => 3));
 }
 
 // Support for CiviCRM <= 4.1
