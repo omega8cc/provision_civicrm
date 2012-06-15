@@ -201,6 +201,29 @@ function civicrm_drush_command() {
                     'Run CiviMail cron with admin credentials and site key.',
                     ),
               );
+    $items['civicrm-csv-export'] = array(
+      'callback'    => 'drush_civicrm_csv_export',
+      'description' => "Command line CSV export tool.",
+      'arguments'   => array(
+        'entity' => 'A CiviCRM entity (mandatory).',
+        'params' => 'Query parameters (optional).',
+      ),
+      'examples'    => array(
+        'Contacts' => 'drush civicrm-csv-export Contact last_name=Doe,First_name=John > johndoes.csv',
+        'Tags'     => 'drush civicrm-csv-export Tag > tags.csv',
+      ),
+    );
+    $items['civicrm-csv-import'] = array(
+      'callback'    => 'drush_civicrm_csv_import',
+      'description' => "Command line import tool.",
+      'arguments'   => array(
+        'entity' => 'A CiviCRM entity (mandatory).',
+        'file'   => 'CSV file to import (if missing, will print available columns to include in the CSV file).',
+      ),
+      'examples'    => array(
+        'Standard example' => 'drush civicrm-csv-import Contact contacts.csv',
+      ),
+    );
 
     return $items;
 }
@@ -968,6 +991,125 @@ function _civicrm_dsn_close() {
   }
 }
 
+function drush_civicrm_csv_export_validate() {
+  return _civicrm_init();
+}
+
+function drush_civicrm_csv_export($entity, $pp = NULL) {
+  $separator = ",";
+  $params = array('version' => 3);
+
+  if ($pp) {
+    $pp = explode(',', $pp);
+
+    foreach ($pp as $p) {
+      $t = explode('=', $p);
+
+      if (sizeof($t) == 2) {
+        $params[$t[0]] = $t[1];
+      }
+      else {
+        drush_log(dt("WARNING: invalid parameter !param (expected field=value)", array('!param' => $p)));
+      }
+    }
+  }
+
+  $result = civicrm_api($entity, 'getfields', array('version' => 3));
+  if ($result['is_error']) {
+    drush_die(dt("!entity: not a recognized Entity", array('!entity' => $entity)));
+  }
+
+  $columns = array_keys($result['values']);
+
+  $out = fopen("php://output", 'w');
+  fputcsv($out, $columns, $separator, '"');
+
+  $result = civicrm_api($entity, 'Get', $params);
+
+  foreach ($result['values'] as $row) {
+    fputcsv($out, $row, $separator, '"');
+  }
+
+  fclose($out);
+}
+
+function drush_civicrm_csv_import_validate() {
+  return _civicrm_init();
+}
+
+function drush_civicrm_csv_import($entity, $csvfile = NULL) {
+  $separator = ",";
+
+  $result = civicrm_api($entity, 'getfields', array('version' => 3));
+  if ($result['is_error']) {
+    return drush_set_error('CIVICRM_CSV_EXPORT_BAD_ENTITY', dt("!entity: not a recognized Entity", array('!entity' => $entity)));
+  }
+
+  $columns = array_keys($result['values']);
+
+  if (! $csvfile) {
+    $result = civicrm_api($entity, 'getfields', array('version' => 3));
+    $columns = implode(', ', $columns);
+    return drush_set_error('CIVICRM_CSV_EXPORT_MISSING_CSVFILE', dt("You need to profide a CSV file with (some of) these columns: !columns", array('!columns' => $columns)));
+  }
+
+  $handle = fopen($csvfile, "r");
+
+  if (! $handle) {
+    return drush_set_error('CIVICRM_CSV_EXPORT_INVALID_FILE', dt("!file: could not be open.", array('!file' => $csvfile)));
+  }
+
+  $header = fgetcsv($handle, 1000, $separator);
+
+  if (! $header) {
+    $separator = ";";
+    rewind($handle);
+    $header = fgetcsv($handle, 1000, $separator);
+  }
+
+  if (! $header) {
+    return drush_set_error('CIVICRM_CSV_EXPORT_INVALID_CSV', dt("Invalid file format for !file. It must be a vlid CSV with separator ',' or ';'", array('!file' => $csvfile)));
+  }
+
+  $undefined = array_diff($header, $columns);
+
+  if (count($undefined) == count($header)) {
+    return drush_set_error('CIVICRM_CSV_EXPORT_INVALID_CSVHEADERS',
+      dt("The first line must contain the name of the fields, expected (some of) !expected but read: !found",
+        array(
+          '!expected' => implode (', ', $columns),
+          '!found' => implode (', ', $header),
+        )
+      ));
+  }
+
+  if ($undefined){
+    return drush_set_error('CIVICRM_CSV_EXPORT_UNKNOWN_CSVHEADERS', dt("Unrecognized fields: !fields", array('!fields' => implode(', ', $undefined))));
+  }
+
+  $cpt = 0;
+  while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+    // Convert line
+    $params = array('version' => 3);
+    foreach ($header as $i => $field) {
+      $params[$field] = $data[$i];
+    }
+
+    // Process line
+    $result = civicrm_api($entity, 'Create', $params);
+    if ($result['is_error']) {
+      drush_log(dt('ERROR: line !cpt: !error', array('!cpt' => $cpt, '!error' => $result['error_message'])), 'error');
+    }
+    else {
+      drush_log(dt('Line !cpt: created', array('!cpt' => $cpt)), 'ok');
+    }
+
+    $cpt++;
+  }
+
+  fclose($handle);
+}
+
 /**
  * Initializes the CiviCRM environment and configuration.
  * TODO: document why we can't call civicrm_initialize() directly.
@@ -1019,6 +1161,9 @@ function _civicrm_init($fail = TRUE) {
     $classLoader = new CRM_Core_ClassLoader();
     $classLoader->register();
   }
+
+  // many calls deal with the API, so include it all the time
+  require_once 'api/api.php';
 
   $init = TRUE;
   return $init;
