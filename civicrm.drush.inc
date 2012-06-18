@@ -1172,6 +1172,10 @@ function _civicrm_get_crmpath() {
 /**
  * (Drush callback)
  */
+function drush_civicrm_api_validate() {
+  return _civicrm_init();
+}
+
 function drush_civicrm_api() {
   $DEFAULTS = array('version' => 3);
 
@@ -1201,8 +1205,23 @@ function drush_civicrm_api() {
       break;
   }
 
-  civicrm_initialize();
-  $result = civicrm_api($entity, $action, $params);
+  // Cron jobs get special treatement, so that we can log their output
+  if ($entity == 'Job') {
+    require_once 'CRM/Core/JobManager.php';
+    $facility = new CRM_Core_JobManager();
+
+    if ($action == 'execute') {
+      $facility->execute(FALSE); // do not authenticate
+    }
+    else {
+      $facility->executeJobByAction($entity, $action);
+    }
+
+    return;
+  }
+  else {
+    $result = civicrm_api($entity, $action, $params);
+  }
 
   switch (drush_get_option('out', 'pretty')) {
     case 'pretty':
