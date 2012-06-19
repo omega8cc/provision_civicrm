@@ -1010,12 +1010,20 @@ function drush_civicrm_csv_export($entity, $pp = NULL) {
     drush_die(dt("!entity: not a recognized Entity", array('!entity' => $entity)));
   }
 
-  $columns = array_keys($result['values']);
+  // Is not what we want, because does not match colums to results
+  // $columns = array_keys($result['values']);
 
   $out = fopen("php://output", 'w');
-  fputcsv($out, $columns, $separator, '"');
+  // fputcsv($out, $columns, $separator, '"');
 
   $result = civicrm_api($entity, 'Get', $params);
+
+  // Fetch the field keys from the first result
+  $allids = array_keys($result['values']);
+  drush_log(print_r($allids, 1));
+
+  $columns = array_keys($result['values'][$allids[0]]);
+  fputcsv($out, $columns, $separator, '"');
 
   foreach ($result['values'] as $row) {
     fputcsv($out, $row, $separator, '"');
@@ -1074,8 +1082,9 @@ function drush_civicrm_csv_import($entity, $csvfile = NULL) {
       ));
   }
 
-  if ($undefined){
-    return drush_set_error('CIVICRM_CSV_EXPORT_UNKNOWN_CSVHEADERS', dt("Unrecognized fields: !fields", array('!fields' => implode(', ', $undefined))));
+  if ($undefined) {
+    // return drush_set_error('CIVICRM_CSV_EXPORT_UNKNOWN_CSVHEADERS', dt("Unrecognized fields: !fields", array('!fields' => implode(', ', $undefined))));
+    drush_log(dt('Warning: some fields *may* not be valid: !fields', array('!fields' => implode(', ', $undefined))), 'warning');
   }
 
   $cpt = 0;
