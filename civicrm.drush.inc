@@ -823,6 +823,7 @@ function drush_civicrm_civimail_cron_old() {
 
     // log in a sub-directory specific for drush otherwise we may have permission
     // issues on the log file (if it has been created by the web server).
+    require_once 'CRM/Core/Config.php';
     $config = CRM_Core_Config::singleton( );
     $config->configAndLogDir = $config->configAndLogDir . 'drush/';
 
