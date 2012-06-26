@@ -1163,7 +1163,9 @@ function _civicrm_init($fail = TRUE) {
   }
 
   // many calls deal with the API, so include it all the time
-  require_once 'api/api.php';
+  if (substr($codeVer, 0, 3) >= '3.4') {
+    require_once 'api/api.php';
+  }
 
   $init = TRUE;
   return $init;
