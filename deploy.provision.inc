@@ -38,7 +38,7 @@ function drush_civicrm_post_provision_deploy() {
   }
 
   drush_log(dt("CiviCRM: Running drush_civicrm_post_provision_deploy"));
-  drush_civicrm_post_provision_verify();
+  provision_civicrm_verify_common();
 
   // Run the CiviCRM upgrade procedure
   _provision_civicrm_upgradedb();

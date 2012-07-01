@@ -66,18 +66,20 @@ function civicrm_drush_command() {
     $items = array();
 
     // the key in the $items array is the name of the command.
-    $items['civicrm-api'] =
-        array('description' => 'CLI access to CiviCRM APIs. It can return pretty-printor json formatted data.',
-              'examples'    =>
-              array('drush civicrm-api contact.create first_name=John last_name=Doe contact_type=Individual' => 'Create a new contact named John Doe',
-                    'drush civicrm-api contact.create id=1 --out=json' =>  'Find/display a contact in JSON format',
-                    ),
-              'options'     =>  array(
-                  '--in' => 'Input type: "args" (command-line), "json" (STDIN)',
-                  '--out' => 'Output type: "pretty" (STDOUT), "json" (STDOUT)',
-                  ),
-              'aliases' => array('cvapi'),
-              );
+    $items['civicrm-api'] = array(
+      'description' => 'CLI access to CiviCRM APIs. It can return pretty-printor json formatted data.',
+      'examples'    => array(
+        'drush civicrm-api contact.create first_name=John last_name=Doe contact_type=Individual' => 'Create a new contact named John Doe',
+        'drush civicrm-api contact.create id=1 --out=json' =>  'Find/display a contact in JSON format',
+        'drush -u admin civicrm-api Job.process_mailing'   =>  'Run the CiviMail cronjob as the admin user.',
+        'drush -u admin civicrm-api Job.fetch_bounces'     =>  'Process the mailing bounces as the admin user.',
+      ),
+      'options'     =>  array(
+        'in' => 'Input type: "args" (command-line), "json" (STDIN)',
+        'out' => 'Output type: "pretty" (STDOUT), "json" (STDOUT)',
+      ),
+      'aliases' => array('cvapi'),
+    );
     $items['civicrm-install'] =
         array('description' => "Install a new instance of CiviCRM.",
               'options'     =>
@@ -183,24 +185,16 @@ function civicrm_drush_command() {
       'description' => "Open a SQL command-line interface using CiviCRM's credentials.",
       'aliases' => array('cvsqlc'),
     );
-    $items['civicrm-process-mail-queue'] =
-        array('description' => "Process pending CiviMail mailing jobs.",
-              'examples'    =>
-              array('drush civicrm-process-mail-queue -u admin' =>
-                    'Process CiviMail queue with admin credentials.',
-                    ),
-              );
-    $items['civicrm-member-records'] =
-        array('description' => "Run the CiviMember UpdateMembershipRecord cron (civicrm-member-records).",
-              );
-    $items['civicrm-civimail'] = 
-        array('callback'    => 'drush_civicrm_civimail_cron_old',
-              'description' => "DEPRECATED: Run the CiviMail cron (CiviCRM < 4.1).",
-              'examples'    => 
-              array('drush --uri=http://example.com civicrm-civimail -u admin -p admin -s 12345678912345678912345678' => 
-                    'Run CiviMail cron with admin credentials and site key.',
-                    ),
-              );
+    $items['civicrm-member-records'] = array(
+      'description' => "DEPRECATED: Run the CiviMember UpdateMembershipRecord cron (civicrm-member-records).",
+    );
+    $items['civicrm-civimail'] = array(
+      'callback'    => 'drush_civicrm_civimail_cron_old',
+      'description' => "DEPRECATED: Run the CiviMail cron (CiviCRM < 4.1).",
+      'examples'    => array(
+        'drush civicrm-civimail -u admin -p admin -s 12345678912345678912345678' => 'Run CiviMail cron with admin credentials and site key.',
+      ),
+    );
     $items['civicrm-csv-export'] = array(
       'callback'    => 'drush_civicrm_csv_export',
       'description' => "Command line CSV export tool.",
@@ -807,10 +801,6 @@ function drush_civicrm_restore() {
     _civicrm_dsn_close();
 }
 
-function drush_civicrm_civimail_cron() {
-    civicrm_api('Mailing','Process',array('version' => 3));
-}
-
 // Support for CiviCRM <= 4.1
 function drush_civicrm_civimail_cron_old() {
     _civicrm_init();
@@ -833,6 +823,7 @@ function drush_civicrm_civimail_cron_old() {
 
     // log in a sub-directory specific for drush otherwise we may have permission
     // issues on the log file (if it has been created by the web server).
+    require_once 'CRM/Core/Config.php';
     $config = CRM_Core_Config::singleton( );
     $config->configAndLogDir = $config->configAndLogDir . 'drush/';
 
@@ -1019,12 +1010,20 @@ function drush_civicrm_csv_export($entity, $pp = NULL) {
     drush_die(dt("!entity: not a recognized Entity", array('!entity' => $entity)));
   }
 
-  $columns = array_keys($result['values']);
+  // Is not what we want, because does not match colums to results
+  // $columns = array_keys($result['values']);
 
   $out = fopen("php://output", 'w');
-  fputcsv($out, $columns, $separator, '"');
+  // fputcsv($out, $columns, $separator, '"');
 
   $result = civicrm_api($entity, 'Get', $params);
+
+  // Fetch the field keys from the first result
+  $allids = array_keys($result['values']);
+  drush_log(print_r($allids, 1));
+
+  $columns = array_keys($result['values'][$allids[0]]);
+  fputcsv($out, $columns, $separator, '"');
 
   foreach ($result['values'] as $row) {
     fputcsv($out, $row, $separator, '"');
@@ -1083,8 +1082,9 @@ function drush_civicrm_csv_import($entity, $csvfile = NULL) {
       ));
   }
 
-  if ($undefined){
-    return drush_set_error('CIVICRM_CSV_EXPORT_UNKNOWN_CSVHEADERS', dt("Unrecognized fields: !fields", array('!fields' => implode(', ', $undefined))));
+  if ($undefined) {
+    // return drush_set_error('CIVICRM_CSV_EXPORT_UNKNOWN_CSVHEADERS', dt("Unrecognized fields: !fields", array('!fields' => implode(', ', $undefined))));
+    drush_log(dt('Warning: some fields *may* not be valid: !fields', array('!fields' => implode(', ', $undefined))), 'warning');
   }
 
   $cpt = 0;
@@ -1163,7 +1163,9 @@ function _civicrm_init($fail = TRUE) {
   }
 
   // many calls deal with the API, so include it all the time
-  require_once 'api/api.php';
+  if (substr($codeVer, 0, 3) >= '3.4') {
+    require_once 'api/api.php';
+  }
 
   $init = TRUE;
   return $init;
@@ -1182,6 +1184,10 @@ function _civicrm_get_crmpath() {
 /**
  * (Drush callback)
  */
+function drush_civicrm_api_validate() {
+  return _civicrm_init();
+}
+
 function drush_civicrm_api() {
   $DEFAULTS = array('version' => 3);
 
@@ -1211,12 +1217,29 @@ function drush_civicrm_api() {
       break;
   }
 
-  civicrm_initialize();
-  $result = civicrm_api($entity, $action, $params);
+  // Cron jobs get special treatement, so that we can log their output
+  if ($entity == 'Job') {
+    require_once 'CRM/Core/JobManager.php';
+    $facility = new CRM_Core_JobManager();
+
+    if ($action == 'execute') {
+      $facility->execute(FALSE); // do not authenticate
+    }
+    else {
+      $facility->executeJobByAction($entity, $action);
+    }
+
+    return;
+  }
+  else {
+    $result = civicrm_api($entity, $action, $params);
+  }
 
   switch (drush_get_option('out', 'pretty')) {
     case 'pretty':
-      drush_print_r($result);
+      if ($result['count'] || drush_get_option('debug')) {
+        drush_print_r($result);
+      }
       break;
     case 'json':
       drush_print(json_encode($result));
