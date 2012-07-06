@@ -1154,7 +1154,10 @@ function _civicrm_init($fail = TRUE) {
 
   // Autoload was added in 4.2
   require_once 'CRM/Utils/System.php';
-  $codeVer = CRM_Utils_System::version();
+
+  if (method_exists('CRM_Utils_System', 'version')) {
+    $codeVer = CRM_Utils_System::version();
+  }
 
   if (substr($codeVer, 0, 3) >= '4.2') {
     require_once $civicrm_root . '/CRM/Core/ClassLoader.php';
