@@ -392,6 +392,17 @@ function provision_civicrm_verify_common() {
 function _provision_civicrm_upgradedb() {
   drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb(), calling _civicrm_init()"));
 
+  // Check for the CiviCRM installer helper, to ignore the upgrade
+  // on really old versions of civicrm (verify also does this).
+  $crmPath = _provision_civicrm_get_package_path();
+
+  $civicrmInstallerHelper = $crmPath . "/install/civicrm.php";
+
+  if (! file_exists($civicrmInstallerHelper) ) {
+    drush_log(dt("CiviCRM installer helper file is missing. Old CiviCRM version?"));
+    return;
+  }
+
   if (! defined('CIVICRM_UPGRADE_ACTIVE')) { 
     define('CIVICRM_UPGRADE_ACTIVE', 1); 
   }
