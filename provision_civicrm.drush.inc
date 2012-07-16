@@ -161,6 +161,31 @@ function _provision_civicrm_fixresourceurls() {
   $civicrm_imageurl = 'http://' . drush_get_option('uri') . '/sites/' . drush_get_option('uri') . '/files/civicrm/persist/contribute/';
   _provision_civicrm_update_option_value('imageUploadURL', $civicrm_imageurl);
 
+  // Since 4.1, we have settings in civicrm_settings
+  // and sometimes they are not correctly set. Brutally reset them.
+  // FIXME: do this for other variables too?
+  // merge in _provision_civicrm_fixpermissions() ?
+  // NOTE: we check dbVer, and not codeVer, because the 4.1 upgrade
+  // may not have been run yet (i.e. 4.0 -> 4.1 upgrade).
+  require_once 'CRM/Core/BAO/Domain.php';
+  $dbVer = CRM_Core_BAO_Domain::version();
+
+  if (substr($dbVer, 0, 3) >= '4.1') {
+    switch (drush_drupal_major_version()) {
+      case 6:
+        db_query('UPDATE {civicrm_setting} SET value = "%s" WHERE name = "%s"',
+          array('uploadDir', serialize(d()->site_path . '/files/civicrm/upload')));
+        break;
+
+      case 7:
+        db_query('UPDATE {civicrm_setting} SET value = :val WHERE name = :name',
+          array(
+            ':name' => 'uploadDir',
+            ':val'  => serialize(d()->site_path . '/files/civicrm/upload')));
+        break;
+    }
+  }
+
   drush_log(dt("CiviCRM: finished running _provision_civicrm_fixresourceurls()"));
 }
 
