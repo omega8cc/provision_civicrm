@@ -21,6 +21,41 @@ function provision_civicrm_drush_init() {
 }
 
 /**
+ * Setup logs and template_c in a sub-directory to avoid permission
+ * conflicts between the www-user and the aegir user.
+ */
+function provision_civicrm_setup_temp_directories() {
+  require_once 'CRM/Core/Config.php';
+  $config = CRM_Core_Config::singleton( );
+  $config->configAndLogDir = $config->configAndLogDir . 'drush/';
+
+  $exists = provision_file()->exists($config->configAndLogDir)
+    ->succeed('CiviCRM: @path exists.')
+    ->status();
+
+  if (! $exists) {
+    provision_file()->mkdir($config->configAndLogDir)
+      ->succeed('CiviCRM: log path @path has been created.')
+      ->fail('CiviCRM: log path @path could not be created.', 'DRUSH_PERM_ERROR')
+      ->status();
+  }
+
+  $config->templateCompileDir = $config->templateCompileDir . 'drush/';
+
+  $exists = provision_file()->exists($config->templateCompileDir)
+    ->succeed('CiviCRM: @path exists.')
+    ->status();
+
+  if (! $exists) {
+    $exists = provision_file()->mkdir($config->templateCompileDir)
+      ->succeed('CiviCRM: compiled template path @path has been created.')
+      ->fail('CiviCRM: compiled template path @path could not be created.', 'DRUSH_PERM_ERROR')
+      ->status();
+  }
+
+}
+
+/**
  * Create a civicron user and role
  */
 function _provision_civicrm_create_civicron_user() {
@@ -397,9 +432,8 @@ function provision_civicrm_verify_common() {
   drush_set_option('oldVal_2', drush_get_option('civicrm_old_baseurl'));
   drush_set_option('newVal_2', 'http://' . drush_get_option('uri'));
 
-  drush_log(dt("CiviCRM: about to run _provision_civicrm_do_site_move()"));
+  // Update database settings for the directory paths
   _provision_civicrm_do_site_move();
-  drush_log(dt("CiviCRM: finished running _provision_civicrm_do_site_move"));
 
   // Update Resource URLs
   _provision_civicrm_fixresourceurls();
@@ -436,48 +470,14 @@ function _provision_civicrm_upgradedb() {
   if (! defined('CIVICRM_UPGRADE_ACTIVE')) { 
     define('CIVICRM_UPGRADE_ACTIVE', 1); 
   }
-  _civicrm_init();
 
-  drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb(), _civicrm_init() worked, setting up environment."));
+  _civicrm_init();
+  provision_civicrm_setup_temp_directories();
+
+  drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb(), _civicrm_init() worked, comparing code and schema versions."));
 
   $_POST['upgrade'] = 1;
   $_GET['q'] = 'civicrm/upgrade';
-  require_once 'CRM/Core/Config.php';
-  require_once 'CRM/Core/Smarty.php';
-
-  // log in a sub-directory specific for drush otherwise we may have permission
-  // issues on the log file (if it has been created by the web server).
-  $config = CRM_Core_Config::singleton( );
-
-  $config->configAndLogDir = $config->configAndLogDir . 'drush/';
-
-  $exists = provision_file()->exists($config->configAndLogDir)
-    ->succeed('CiviCRM: @path exists.')
-    ->status();
-
-  if (! $exists) {
-    provision_file()->mkdir($config->configAndLogDir)
-      ->succeed('CiviCRM: log path @path has been created.')
-      ->fail('CiviCRM: log path @path could not be created.', 'DRUSH_PERM_ERROR')
-      ->status();
-  }
-
-  $config->templateCompileDir = $config->templateCompileDir . 'drush/';
-
-  $exists = provision_file()->exists($config->templateCompileDir)
-    ->succeed('CiviCRM: @path exists.')
-    ->status();
-
-  if (! $exists) {
-    $exists = provision_file()->mkdir($config->templateCompileDir)
-      ->succeed('CiviCRM: compiled template path @path has been created.')
-      ->fail('CiviCRM: compiled template path @path could not be created.', 'DRUSH_PERM_ERROR')
-      ->status();
-  }
-
-  $template =& CRM_Core_Smarty::singleton( );
-
-  drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb(), _civicrm_init() worked, comparing code and schema versions."));
 
   if (! drush_civicrm_upgrade_db_validate()) {
     return FALSE; // above already does a drush_set_error
@@ -485,8 +485,10 @@ function _provision_civicrm_upgradedb() {
 
   // Still need to check if the DB and code versions are the same
   // so that we can avoid calling the upgrade on 'verify'.
+  require_once 'CRM/Core/Config.php';
   require_once 'CRM/Utils/System.php';
   require_once 'CRM/Core/BAO/Domain.php';
+
   $codeVer = CRM_Utils_System::version();
   $dbVer   = CRM_Core_BAO_Domain::version();
 
@@ -498,6 +500,8 @@ function _provision_civicrm_upgradedb() {
   drush_log(dt("CiviCRM: Starting with upgrade .."));
 
   require_once( 'CRM/Upgrade/Page/Upgrade.php' );
+  require_once 'CRM/Core/Smarty.php';
+  $template =& CRM_Core_Smarty::singleton( );
 
   if (class_exists('CRM_Upgrade_Headless')) {
     // Note: CRM_Upgrade_Headless introduced in 4.2 -- at the same time as class auto-loading
