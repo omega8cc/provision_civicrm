@@ -43,8 +43,11 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     return;
   }
 
-  drush_log(dt("CiviCRM: running drush_civicrm_post_provision_verify."));
+  _civicrm_init();
   provision_civicrm_verify_common();
-  drush_log(dt("CiviCRM: Finished drush_civicrm_post_provision_verify."));
+
+  drush_log(dt("CiviCRM: calling cache clear"));
+  drush_civicrm_cacheclear();
+  drush_log(dt("CiviCRM: cache clear finished"));
 }
 

@@ -43,6 +43,11 @@ function drush_civicrm_post_provision_deploy() {
   // Run the CiviCRM upgrade procedure
   _provision_civicrm_upgradedb();
 
+  // May not be necessary..
+  drush_log(dt("CiviCRM: calling cache clear"));
+  drush_civicrm_cacheclear();
+  drush_log(dt("CiviCRM: cache clear finished"));
+
   // Verify will run later on and do fixpermissions and cache clear
   // so we won't do it again here. However, people running a deploy
   // manually (from the command line) will have to also run verify after.

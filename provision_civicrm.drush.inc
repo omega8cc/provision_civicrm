@@ -385,7 +385,7 @@ function provision_civicrm_verify_common() {
   // Make sure the template_c and uploads have the correct permissions
   _provision_civicrm_fixpermissions();
 
-  drush_civicrm_cacheclear();
+  drush_log(dt("CiviCRM: leaving provision_civicrm_verify_common()."));
 }
 
 /**
