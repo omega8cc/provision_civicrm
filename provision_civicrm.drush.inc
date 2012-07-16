@@ -6,6 +6,9 @@
  * Common functions used by install and verify.
  */
 
+/**
+ * Implements hook_drush_init().
+ */
 function provision_civicrm_drush_init() {
   if (_provision_civicrm_is_site_context()) {
     // if other modules use PEAR (ex: print_mail), it may cause a PHP conflict
@@ -316,6 +319,8 @@ function provision_civicrm_get_best_guess_settings() {
  * CiviCRM verify operations (used by both verify and deploy)
  */
 function provision_civicrm_verify_common() {
+  drush_log(dt("CiviCRM: in provision_civicrm_verify_common()."));
+
   // Make sure to write the civicrm options
   $civi_opts = _provision_civicrm_drush_options('post verify');
   foreach ($civi_opts as $opt => $val) {
@@ -334,7 +339,7 @@ function provision_civicrm_verify_common() {
   $civicrmInstallerHelper = $crmPath . "/install/civicrm.php";
 
   if (! file_exists($civicrmInstallerHelper) ) {
-    drush_log(dt("CiviCRM installer helper file is missing."));
+    drush_log(dt("CiviCRM installer helper file is missing. Not running upgrade."));
     return;
   }
 
@@ -509,6 +514,8 @@ function _provision_civicrm_upgradedb() {
  * need to maintain this type of forked code. TODO FIXME
  */
 function _provision_civicrm_do_site_move($defaultValues = array()) {
+  drush_log(dt("CiviCRM: in _provision_civicrm_do_site_move()."));
+
   // See CRM_Core_Config::isUpgradeMode() for more information
   if (! defined('CIVICRM_UPGRADE_ACTIVE')) {
     define('CIVICRM_UPGRADE_ACTIVE', 1);
@@ -637,6 +644,7 @@ WHERE  name = %3 )
   // clear the template_c and upload directory also
   $config->cleanup( 3, true );
 
+  drush_log(dt("CiviCRM: finished _provision_civicrm_do_site_move()."));
   return $moveStatus;
 }
 
