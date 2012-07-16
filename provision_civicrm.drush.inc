@@ -674,10 +674,11 @@ WHERE  name = %3 )
       }
   }
 
-  $config =& CRM_Core_Config::singleton( );
+  // [ML] not really necessary? we cache clear anyway afterwards..
+  // $config =& CRM_Core_Config::singleton( );
 
   // clear the template_c and upload directory also
-  $config->cleanup( 3, true );
+  // $config->cleanup( 3, true );
 
   drush_log(dt("CiviCRM: finished _provision_civicrm_do_site_move()."));
   return $moveStatus;
