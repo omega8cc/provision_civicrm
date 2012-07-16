@@ -59,6 +59,15 @@ function provision_civicrm_setup_temp_directories() {
  * Create a civicron user and role
  */
 function _provision_civicrm_create_civicron_user() {
+  // Since 4.1, not necessary to create a dedicated user anymore
+  // since we can run the cron as admin.
+  require_once 'CRM/Core/BAO/Domain.php';
+  $dbVer = CRM_Core_BAO_Domain::version();
+
+  if (substr($dbVer, 0, 3) >= '4.1') {
+    return;
+  }
+
   if (! function_exists("drush_user_create")) {
     drush_log(dt("Not running drush 4.x or above, so cannot create civicron user and role. If you want to run the CiviCRM crons using drush, you will have to create them manually. Once you have done so, you can edit the site's sites/example.org/drushrc.php and set the correct username and password for the cron."));
     drush_set_option('civicrm_cron_username', 'civicron', 'site');
