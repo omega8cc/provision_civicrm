@@ -447,9 +447,6 @@ function provision_civicrm_verify_common() {
   // Update Resource URLs
   _provision_civicrm_fixresourceurls();
 
-  drush_set_option('site_civicrm', TRUE, 'site');
-  // drush_print(print_r(d()->service('civicrm'), 1));
-
   // Make sure the template_c and uploads have the correct permissions
   _provision_civicrm_fixpermissions();
 
