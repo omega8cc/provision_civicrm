@@ -6,6 +6,9 @@
  * Common functions used by install and verify.
  */
 
+/**
+ * Implements hook_drush_init().
+ */
 function provision_civicrm_drush_init() {
   if (_provision_civicrm_is_site_context()) {
     // if other modules use PEAR (ex: print_mail), it may cause a PHP conflict
@@ -18,9 +21,53 @@ function provision_civicrm_drush_init() {
 }
 
 /**
+ * Setup logs and template_c in a sub-directory to avoid permission
+ * conflicts between the www-user and the aegir user.
+ */
+function provision_civicrm_setup_temp_directories() {
+  require_once 'CRM/Core/Config.php';
+  $config = CRM_Core_Config::singleton( );
+  $config->configAndLogDir = $config->configAndLogDir . 'drush/';
+
+  $exists = provision_file()->exists($config->configAndLogDir)
+    ->succeed('CiviCRM: @path exists.')
+    ->status();
+
+  if (! $exists) {
+    provision_file()->mkdir($config->configAndLogDir)
+      ->succeed('CiviCRM: log path @path has been created.')
+      ->fail('CiviCRM: log path @path could not be created.', 'DRUSH_PERM_ERROR')
+      ->status();
+  }
+
+  $config->templateCompileDir = $config->templateCompileDir . 'drush/';
+
+  $exists = provision_file()->exists($config->templateCompileDir)
+    ->succeed('CiviCRM: @path exists.')
+    ->status();
+
+  if (! $exists) {
+    $exists = provision_file()->mkdir($config->templateCompileDir)
+      ->succeed('CiviCRM: compiled template path @path has been created.')
+      ->fail('CiviCRM: compiled template path @path could not be created.', 'DRUSH_PERM_ERROR')
+      ->status();
+  }
+
+}
+
+/**
  * Create a civicron user and role
  */
 function _provision_civicrm_create_civicron_user() {
+  // Since 4.1, not necessary to create a dedicated user anymore
+  // since we can run the cron as admin.
+  require_once 'CRM/Core/BAO/Domain.php';
+  $dbVer = CRM_Core_BAO_Domain::version();
+
+  if (substr($dbVer, 0, 3) >= '4.1') {
+    return;
+  }
+
   if (! function_exists("drush_user_create")) {
     drush_log(dt("Not running drush 4.x or above, so cannot create civicron user and role. If you want to run the CiviCRM crons using drush, you will have to create them manually. Once you have done so, you can edit the site's sites/example.org/drushrc.php and set the correct username and password for the cron."));
     drush_set_option('civicrm_cron_username', 'civicron', 'site');
@@ -157,6 +204,31 @@ function _provision_civicrm_fixresourceurls() {
   // Image Upload URL
   $civicrm_imageurl = 'http://' . drush_get_option('uri') . '/sites/' . drush_get_option('uri') . '/files/civicrm/persist/contribute/';
   _provision_civicrm_update_option_value('imageUploadURL', $civicrm_imageurl);
+
+  // Since 4.1, we have settings in civicrm_settings
+  // and sometimes they are not correctly set. Brutally reset them.
+  // FIXME: do this for other variables too?
+  // merge in _provision_civicrm_fixpermissions() ?
+  // NOTE: we check dbVer, and not codeVer, because the 4.1 upgrade
+  // may not have been run yet (i.e. 4.0 -> 4.1 upgrade).
+  require_once 'CRM/Core/BAO/Domain.php';
+  $dbVer = CRM_Core_BAO_Domain::version();
+
+  if (substr($dbVer, 0, 3) >= '4.1') {
+    switch (drush_drupal_major_version()) {
+      case 6:
+        db_query('UPDATE {civicrm_setting} SET value = "%s" WHERE name = "%s"',
+          array('uploadDir', serialize(d()->site_path . '/files/civicrm/upload')));
+        break;
+
+      case 7:
+        db_query('UPDATE {civicrm_setting} SET value = :val WHERE name = :name',
+          array(
+            ':name' => 'uploadDir',
+            ':val'  => serialize(d()->site_path . '/files/civicrm/upload')));
+        break;
+    }
+  }
 
   drush_log(dt("CiviCRM: finished running _provision_civicrm_fixresourceurls()"));
 }
@@ -316,6 +388,8 @@ function provision_civicrm_get_best_guess_settings() {
  * CiviCRM verify operations (used by both verify and deploy)
  */
 function provision_civicrm_verify_common() {
+  drush_log(dt("CiviCRM: in provision_civicrm_verify_common()."));
+
   // Make sure to write the civicrm options
   $civi_opts = _provision_civicrm_drush_options('post verify');
   foreach ($civi_opts as $opt => $val) {
@@ -334,7 +408,7 @@ function provision_civicrm_verify_common() {
   $civicrmInstallerHelper = $crmPath . "/install/civicrm.php";
 
   if (! file_exists($civicrmInstallerHelper) ) {
-    drush_log(dt("CiviCRM installer helper file is missing."));
+    drush_log(dt("CiviCRM installer helper file is missing. Not running upgrade."));
     return;
   }
 
@@ -367,20 +441,16 @@ function provision_civicrm_verify_common() {
   drush_set_option('oldVal_2', drush_get_option('civicrm_old_baseurl'));
   drush_set_option('newVal_2', 'http://' . drush_get_option('uri'));
 
-  drush_log(dt("CiviCRM: about to run _provision_civicrm_do_site_move()"));
+  // Update database settings for the directory paths
   _provision_civicrm_do_site_move();
-  drush_log(dt("CiviCRM: finished running _provision_civicrm_do_site_move"));
 
   // Update Resource URLs
   _provision_civicrm_fixresourceurls();
 
-  drush_set_option('site_civicrm', TRUE, 'site');
-  // drush_print(print_r(d()->service('civicrm'), 1));
-
   // Make sure the template_c and uploads have the correct permissions
   _provision_civicrm_fixpermissions();
 
-  drush_civicrm_cacheclear();
+  drush_log(dt("CiviCRM: leaving provision_civicrm_verify_common()."));
 }
 
 /**
@@ -406,48 +476,14 @@ function _provision_civicrm_upgradedb() {
   if (! defined('CIVICRM_UPGRADE_ACTIVE')) { 
     define('CIVICRM_UPGRADE_ACTIVE', 1); 
   }
-  _civicrm_init();
 
-  drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb(), _civicrm_init() worked, setting up environment."));
+  _civicrm_init();
+  provision_civicrm_setup_temp_directories();
+
+  drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb(), _civicrm_init() worked, comparing code and schema versions."));
 
   $_POST['upgrade'] = 1;
   $_GET['q'] = 'civicrm/upgrade';
-  require_once 'CRM/Core/Config.php';
-  require_once 'CRM/Core/Smarty.php';
-
-  // log in a sub-directory specific for drush otherwise we may have permission
-  // issues on the log file (if it has been created by the web server).
-  $config = CRM_Core_Config::singleton( );
-
-  $config->configAndLogDir = $config->configAndLogDir . 'drush/';
-
-  $exists = provision_file()->exists($config->configAndLogDir)
-    ->succeed('CiviCRM: @path exists.')
-    ->status();
-
-  if (! $exists) {
-    provision_file()->mkdir($config->configAndLogDir)
-      ->succeed('CiviCRM: log path @path has been created.')
-      ->fail('CiviCRM: log path @path could not be created.', 'DRUSH_PERM_ERROR')
-      ->status();
-  }
-
-  $config->templateCompileDir = $config->templateCompileDir . 'drush/';
-
-  $exists = provision_file()->exists($config->templateCompileDir)
-    ->succeed('CiviCRM: @path exists.')
-    ->status();
-
-  if (! $exists) {
-    $exists = provision_file()->mkdir($config->templateCompileDir)
-      ->succeed('CiviCRM: compiled template path @path has been created.')
-      ->fail('CiviCRM: compiled template path @path could not be created.', 'DRUSH_PERM_ERROR')
-      ->status();
-  }
-
-  $template =& CRM_Core_Smarty::singleton( );
-
-  drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb(), _civicrm_init() worked, comparing code and schema versions."));
 
   if (! drush_civicrm_upgrade_db_validate()) {
     return FALSE; // above already does a drush_set_error
@@ -455,8 +491,10 @@ function _provision_civicrm_upgradedb() {
 
   // Still need to check if the DB and code versions are the same
   // so that we can avoid calling the upgrade on 'verify'.
+  require_once 'CRM/Core/Config.php';
   require_once 'CRM/Utils/System.php';
   require_once 'CRM/Core/BAO/Domain.php';
+
   $codeVer = CRM_Utils_System::version();
   $dbVer   = CRM_Core_BAO_Domain::version();
 
@@ -468,6 +506,8 @@ function _provision_civicrm_upgradedb() {
   drush_log(dt("CiviCRM: Starting with upgrade .."));
 
   require_once( 'CRM/Upgrade/Page/Upgrade.php' );
+  require_once 'CRM/Core/Smarty.php';
+  $template =& CRM_Core_Smarty::singleton( );
 
   if (class_exists('CRM_Upgrade_Headless')) {
     // Note: CRM_Upgrade_Headless introduced in 4.2 -- at the same time as class auto-loading
@@ -509,6 +549,8 @@ function _provision_civicrm_upgradedb() {
  * need to maintain this type of forked code. TODO FIXME
  */
 function _provision_civicrm_do_site_move($defaultValues = array()) {
+  drush_log(dt("CiviCRM: in _provision_civicrm_do_site_move()."));
+
   // See CRM_Core_Config::isUpgradeMode() for more information
   if (! defined('CIVICRM_UPGRADE_ACTIVE')) {
     define('CIVICRM_UPGRADE_ACTIVE', 1);
@@ -632,11 +674,13 @@ WHERE  name = %3 )
       }
   }
 
-  $config =& CRM_Core_Config::singleton( );
+  // [ML] not really necessary? we cache clear anyway afterwards..
+  // $config =& CRM_Core_Config::singleton( );
 
   // clear the template_c and upload directory also
-  $config->cleanup( 3, true );
+  // $config->cleanup( 3, true );
 
+  drush_log(dt("CiviCRM: finished _provision_civicrm_do_site_move()."));
   return $moveStatus;
 }
 
