@@ -1146,7 +1146,9 @@ function _civicrm_init($fail = TRUE) {
     }
   }
   // include settings file
+  define('CIVICRM_SETTINGS_PATH', $civicrmSettingsFile);
   include_once $civicrmSettingsFile;
+
   global $civicrm_root;
   if (!is_dir($civicrm_root)) {
     return drush_set_error('CIVICRM_INIT_CODEBASE_NOT_FOUND', dt('Could not locate CiviCRM codebase. Make sure CiviCRM settings file has correct information.'));
@@ -1161,8 +1163,7 @@ function _civicrm_init($fail = TRUE) {
 
   if (substr($codeVer, 0, 3) >= '4.2') {
     require_once $civicrm_root . '/CRM/Core/ClassLoader.php';
-    $classLoader = new CRM_Core_ClassLoader();
-    $classLoader->register();
+    CRM_Core_ClassLoader::singleton()->register();
   }
 
   // many calls deal with the API, so include it all the time
