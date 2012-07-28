@@ -1172,6 +1172,15 @@ function _civicrm_init($fail = TRUE) {
   }
 
   $init = TRUE;
+  $results = drush_command_invoke_all('civicrm_init');
+
+  foreach ($results as $r) {
+    if ($r == FALSE) {
+      drush_log(dt('CiviCRM: a hook_civicrm_init returned FALSE.'));
+      $init = FALSE;
+    }
+  }
+
   return $init;
 }
 
