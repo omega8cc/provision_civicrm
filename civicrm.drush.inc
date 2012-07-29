@@ -1232,6 +1232,14 @@ function drush_civicrm_api() {
 
   // Cron jobs get special treatement, so that we can log their output
   if ($entity == 'Job') {
+    require_once 'CRM/Utils/System.php';
+    $codeVer = substr(CRM_Utils_System::version(), 0, 3);
+
+    if ($codeVer < '4.1') {
+      drush_log(dt("CiviCRM version !ver does not support the unified cron. You should upgrade, it's awsome!", array('!ver' => $codeVer)));
+      return;
+    }
+
     require_once 'CRM/Core/JobManager.php';
     $facility = new CRM_Core_JobManager();
 
