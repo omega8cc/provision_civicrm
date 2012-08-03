@@ -44,10 +44,39 @@ function drush_civicrm_post_provision_verify($url = NULL) {
   }
 
   _civicrm_init();
-  provision_civicrm_verify_common();
 
-  drush_log(dt("CiviCRM: calling cache clear"));
-  drush_civicrm_cacheclear();
-  drush_log(dt("CiviCRM: cache clear finished"));
+  // verify might return fail if, for example, this is a very old version of CiviCRM
+  // in which case, no point continuing with the upgrade and cache clear.
+  if (provision_civicrm_verify_common()) {
+    drush_log(dt("CiviCRM: calling cache clear"));
+    drush_civicrm_cacheclear();
+    drush_log(dt("CiviCRM: cache clear finished"));
+  }
+}
+
+/**
+ * Implements hook_provision_apache_vhost_config().
+ *
+ * Inject a "deny" statement in the Apache vhost on the files/civicrm
+ * directory, in order to restrict access to uploaded files, templates,
+ * logs, etc.
+ *
+ * If you have custom CSS or JS to include, you should do that
+ * from a Drupal module.
+ */
+function provision_civicrm_provision_apache_vhost_config($data = null) {
+  if (! _provision_civicrm_is_site_context()) {
+    return;
+  }
+
+  $cividir = d()->site_path . '/files/civicrm';
+
+  $htaccess  = 
+      "<Directory \"$cividir\">\n"
+    . "  Order allow,deny\n"
+    . "  Deny from all\n"
+    . "</Directory>\n";
+
+  return $htaccess;
 }
 

@@ -21,6 +21,13 @@ function provision_civicrm_drush_init() {
 }
 
 /**
+ * Implements hook_civicrm_init()
+ */
+function provision_civicrm_civicrm_init() {
+  return provision_civicrm_setup_temp_directories();
+}
+
+/**
  * Setup logs and template_c in a sub-directory to avoid permission
  * conflicts between the www-user and the aegir user.
  */
@@ -29,17 +36,23 @@ function provision_civicrm_setup_temp_directories() {
   $config = CRM_Core_Config::singleton( );
   $config->configAndLogDir = $config->configAndLogDir . 'drush/';
 
+  // ConfigAndLog directory
   $exists = provision_file()->exists($config->configAndLogDir)
     ->succeed('CiviCRM: @path exists.')
     ->status();
 
   if (! $exists) {
-    provision_file()->mkdir($config->configAndLogDir)
+    $exists = provision_file()->mkdir($config->configAndLogDir)
       ->succeed('CiviCRM: log path @path has been created.')
       ->fail('CiviCRM: log path @path could not be created.', 'DRUSH_PERM_ERROR')
       ->status();
   }
 
+  if (! $exists) {
+    return FALSE;
+  }
+
+  // Smarty template directory
   $config->templateCompileDir = $config->templateCompileDir . 'drush/';
 
   $exists = provision_file()->exists($config->templateCompileDir)
@@ -53,6 +66,11 @@ function provision_civicrm_setup_temp_directories() {
       ->status();
   }
 
+  if (! $exists) {
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 /**
@@ -478,7 +496,6 @@ function _provision_civicrm_upgradedb() {
   }
 
   _civicrm_init();
-  provision_civicrm_setup_temp_directories();
 
   drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb(), _civicrm_init() worked, comparing code and schema versions."));
 
