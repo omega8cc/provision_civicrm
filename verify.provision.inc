@@ -44,11 +44,14 @@ function drush_civicrm_post_provision_verify($url = NULL) {
   }
 
   _civicrm_init();
-  provision_civicrm_verify_common();
 
-  drush_log(dt("CiviCRM: calling cache clear"));
-  drush_civicrm_cacheclear();
-  drush_log(dt("CiviCRM: cache clear finished"));
+  // verify might return fail if, for example, this is a very old version of CiviCRM
+  // in which case, no point continuing with the upgrade and cache clear.
+  if (provision_civicrm_verify_common()) {
+    drush_log(dt("CiviCRM: calling cache clear"));
+    drush_civicrm_cacheclear();
+    drush_log(dt("CiviCRM: cache clear finished"));
+  }
 }
 
 /**
