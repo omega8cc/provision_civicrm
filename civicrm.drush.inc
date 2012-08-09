@@ -1146,7 +1146,9 @@ function _civicrm_init($fail = TRUE) {
     }
   }
   // include settings file
+  define('CIVICRM_SETTINGS_PATH', $civicrmSettingsFile);
   include_once $civicrmSettingsFile;
+
   global $civicrm_root;
   if (!is_dir($civicrm_root)) {
     return drush_set_error('CIVICRM_INIT_CODEBASE_NOT_FOUND', dt('Could not locate CiviCRM codebase. Make sure CiviCRM settings file has correct information.'));
@@ -1161,8 +1163,7 @@ function _civicrm_init($fail = TRUE) {
 
   if (substr($codeVer, 0, 3) >= '4.2') {
     require_once $civicrm_root . '/CRM/Core/ClassLoader.php';
-    $classLoader = new CRM_Core_ClassLoader();
-    $classLoader->register();
+    CRM_Core_ClassLoader::singleton()->register();
   }
 
   // many calls deal with the API, so include it all the time
@@ -1171,6 +1172,15 @@ function _civicrm_init($fail = TRUE) {
   }
 
   $init = TRUE;
+  $results = drush_command_invoke_all('civicrm_init');
+
+  foreach ($results as $r) {
+    if ($r == FALSE) {
+      drush_log(dt('CiviCRM: a hook_civicrm_init returned FALSE.'));
+      $init = FALSE;
+    }
+  }
+
   return $init;
 }
 
@@ -1222,6 +1232,14 @@ function drush_civicrm_api() {
 
   // Cron jobs get special treatement, so that we can log their output
   if ($entity == 'Job') {
+    require_once 'CRM/Utils/System.php';
+    $codeVer = substr(CRM_Utils_System::version(), 0, 3);
+
+    if ($codeVer < '4.1') {
+      drush_log(dt("CiviCRM version !ver does not support the unified cron. You should upgrade, it's awsome!", array('!ver' => $codeVer)));
+      return;
+    }
+
     require_once 'CRM/Core/JobManager.php';
     $facility = new CRM_Core_JobManager();
 
