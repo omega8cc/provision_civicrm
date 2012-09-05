@@ -28,12 +28,14 @@ function drush_civicrm_pre_provision_deploy($url = NULL) {
  * Implements hook_post_provision_deploy().
  */
 function drush_civicrm_post_provision_deploy() {
-  if (! drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_FULL)) {
-    drush_log(dt("CiviCRM: failed to bootstrap Drupal for deploy."));
+/* c.f. #1696730 */
+/*
+  if (! _provision_civicrm_is_site_context()) {
     return;
   }
 
-  if (! _provision_civicrm_is_site_context()) {
+  if (! drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_FULL)) {
+    drush_log(dt("CiviCRM: failed to bootstrap Drupal for deploy."));
     return;
   }
 
@@ -56,5 +58,6 @@ function drush_civicrm_post_provision_deploy() {
   // manually (from the command line) will have to also run verify after.
 
   drush_log(dt("CiviCRM: Finished drush_civicrm_post_provision_deploy"));
+*/
 }
 
