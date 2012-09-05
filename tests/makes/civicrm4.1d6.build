@@ -1,0 +1,9 @@
+api = 2
+
+core = 6.x
+projects[] = "drupal"
+
+projects[civicrm][type] = "module"
+projects[civicrm][directory_name] = "civicrm"
+projects[civicrm][download][type] = "get"
+projects[civicrm][download][url] = "http://downloads.sourceforge.net/project/civicrm/civicrm-stable/4.1.5/civicrm-4.1.5-drupal6.tar.gz"
