@@ -1,0 +1,9 @@
+api = 2
+
+core = 5.x
+projects[] = "drupal"
+
+projects[civicrm][type] = "module"
+projects[civicrm][directory_name] = "civicrm"
+projects[civicrm][download][type] = "get"
+projects[civicrm][download][url] = "http://downloads.sourceforge.net/project/civicrm/civicrm-stable/1.7.10272/civicrm-1.7.10272-drupal-php5.tar.gz"
