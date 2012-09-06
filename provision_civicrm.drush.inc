@@ -405,8 +405,8 @@ function provision_civicrm_get_best_guess_settings() {
 /**
  * CiviCRM verify operations (used by both verify and deploy)
  */
-function provision_civicrm_verify_common() {
-  drush_log(dt("CiviCRM: in provision_civicrm_verify_common()."));
+function provision_civicrm_regenerate_settings() {
+  drush_log(dt("CiviCRM: starting provision_civicrm_regenerate_settings()."));
 
   // Make sure to write the civicrm options
   $civi_opts = _provision_civicrm_drush_options('post verify');
@@ -433,6 +433,12 @@ function provision_civicrm_verify_common() {
   require_once "$civicrmInstallerHelper";
   _civicrm_generate_settings_file($db_user, $db_passwd, $db_host, $db_name, drush_get_option('civicrm_sitekey', NULL));
   drush_log(dt("CiviCRM: Generated config civicrm.settings.php file"), 'ok');
+  drush_log(dt("CiviCRM: leaving provision_civicrm_regenerate_settings()."));
+}
+
+function provision_civicrm_verify_common() {
+  drush_log(dt("CiviCRM: in provision_civicrm_verify_common()."));
+
 
   // Set file acls on civicrm.settings.php, if necessary
   if (function_exists('provisionacl_set_acl')) {

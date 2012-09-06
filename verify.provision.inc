@@ -43,11 +43,20 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     return;
   }
 
+  drush_log(dt("CiviCRM: Running drush_civicrm_post_provision_verify"));
+
+  // This needs to be done before we initialize CiviCRM,
+  // otherwise we will load with an old include path (civicrm_root).
+  provision_civicrm_regenerate_settings();
+
   _civicrm_init();
 
   // verify might return fail if, for example, this is a very old version of CiviCRM
   // in which case, no point continuing with the upgrade and cache clear.
   if (provision_civicrm_verify_common()) {
+    // Run the CiviCRM upgrade procedure
+    _provision_civicrm_upgradedb();
+
     drush_log(dt("CiviCRM: calling cache clear"));
     drush_civicrm_cacheclear();
     drush_log(dt("CiviCRM: cache clear finished"));
