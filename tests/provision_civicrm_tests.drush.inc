@@ -44,75 +44,75 @@ function drush_provision_civicrm_tests_run() {
   variable_set('hosting_queue_tasks_enabled', '0');
 
   if ($drupal5_tests) {
-    drush_provision_civicrm_tests_install_platform('civicrm1.7d5');
+    drush_provision_civicrm_tests_install_platform('civicrm17d5');
   }
 
-  drush_provision_civicrm_tests_install_platform('civicrm3.4d6');
-  // drush_provision_civicrm_tests_install_platform('civicrm4.0d7');
-  // drush_provision_civicrm_tests_install_platform('civicrm4.1d6');
-  // drush_provision_civicrm_tests_install_platform('civicrm4.1d7');
-  drush_provision_civicrm_tests_install_platform('civicrm4.2d7');
+  drush_provision_civicrm_tests_install_platform('civicrm34d6');
+  // drush_provision_civicrm_tests_install_platform('civicrm40d7');
+  // drush_provision_civicrm_tests_install_platform('civicrm41d6');
+  // drush_provision_civicrm_tests_install_platform('civicrm41d7');
+  drush_provision_civicrm_tests_install_platform('civicrm42d7');
 
   // Install some sites.
   if ($drupal5_tests) {
-    drush_provision_tests_install_site('civicrm1.7d5', 'civicrm1.7d5-default', 'default');
+    drush_provision_civicrm_tests_install_site('civicrm17d5', 'civicrm17d5-default', 'default');
   }
 
-  // drush_provision_tests_install_site('civicrm3.4d6', 'civicrm3.4d6-default', 'default');
-  // drush_provision_tests_install_site('civicrm4.0d7', 'civicrm4.0d7-standard', 'standard');
-  // drush_provision_tests_install_site('civicrm4.1d6', 'civicrm4.1d6-default', 'default');
-  // drush_provision_tests_install_site('civicrm4.1d7', 'civicrm4.1d7-standard', 'standard');
-  drush_provision_tests_install_site('civicrm4.2d7', 'civicrm4.2d7-standard', 'standard');
+  drush_provision_civicrm_tests_install_site('civicrm34d6', 'civicrm34d6-default', 'default');
+  // drush_provision_civicrm_tests_install_site('civicrm40d7', 'civicrm40d7-standard', 'standard');
+  // drush_provision_civicrm_tests_install_site('civicrm41d6', 'civicrm41d6-default', 'default');
+  // drush_provision_civicrm_tests_install_site('civicrm41d7', 'civicrm41d7-standard', 'standard');
+  drush_provision_civicrm_tests_install_site('civicrm42d7', 'civicrm42d7-standard', 'standard');
 
   // Remove the sites.
   if ($drupal5_tests) {
-    drush_provision_tests_remove_site('civicrm1.7d5-default', 'default');
+    drush_provision_civicrm_tests_remove_site('civicrm17d5-default', 'default');
   }
-  // drush_provision_tests_remove_site('civicrm3.4d6-default');
-  // drush_provision_tests_remove_site('civicrm4.0d7-standard');
-  // drush_provision_tests_remove_site('civicrm4.1d6-default');
-  // drush_provision_tests_remove_site('civicrm4.1d7-standard');
-  drush_provision_tests_remove_site('civicrm4.2d7-standard');
+  drush_provision_civicrm_tests_remove_site('civicrm34d6-default');
+  // drush_provision_civicrm_tests_remove_site('civicrm40d7-standard');
+  // drush_provision_civicrm_tests_remove_site('civicrm41d6-default');
+  // drush_provision_civicrm_tests_remove_site('civicrm41d7-standard');
+  # drush_provision_civicrm_tests_remove_site('civicrm42d7-standard');
 
   // Create some sites and migrate them.
 /*
   if ($drupal5_tests) {
-    drush_provision_civicrm_tests_install_platform('civicrm1.7d5', 'drupal5_other');
-    drush_provision_tests_install_site('drupal5', 'drupal5-migrate-drupal5-other', 'default');
-    drush_provision_tests_migrate_site('drupal5-migrate-drupal5-other', 'drupal5_other');
-    drush_provision_tests_remove_site('drupal5-migrate-drupal5-other');
-    drush_provision_tests_remove_platform('drupal5_other');
+    drush_provision_civicrm_tests_install_platform('civicrm17d5', 'drupal5_other');
+    drush_provision_civicrm_tests_install_site('drupal5', 'drupal5-migrate-drupal5-other', 'default');
+    drush_provision_civicrm_tests_migrate_site('drupal5-migrate-drupal5-other', 'drupal5_other');
+    drush_provision_civicrm_tests_remove_site('drupal5-migrate-drupal5-other');
+    drush_provision_civicrm_tests_remove_platform('drupal5_other');
   }
   drush_provision_civicrm_tests_install_platform('drupal6', 'drupal6_other');
-  drush_provision_tests_install_site('drupal6', 'drupal6-migrate-drupal6-other', 'default');
-  drush_provision_tests_migrate_site('drupal6-migrate-drupal6-other', 'drupal6_other');
-  drush_provision_tests_remove_site('drupal6-migrate-drupal6-other');
-  drush_provision_tests_remove_platform('drupal6_other');
+  drush_provision_civicrm_tests_install_site('drupal6', 'drupal6-migrate-drupal6-other', 'default');
+  drush_provision_civicrm_tests_migrate_site('drupal6-migrate-drupal6-other', 'drupal6_other');
+  drush_provision_civicrm_tests_remove_site('drupal6-migrate-drupal6-other');
+  drush_provision_civicrm_tests_remove_platform('drupal6_other');
   drush_provision_civicrm_tests_install_platform('drupal7', 'drupal7_other');
-  drush_provision_tests_install_site('drupal7', 'drupal7-migrate-drupal7-other', 'standard');
-  drush_provision_tests_migrate_site('drupal7-migrate-drupal7-other', 'drupal7_other');
-  drush_provision_tests_remove_site('drupal7-migrate-drupal7-other');
-  drush_provision_tests_remove_platform('drupal7_other');
+  drush_provision_civicrm_tests_install_site('drupal7', 'drupal7-migrate-drupal7-other', 'standard');
+  drush_provision_civicrm_tests_migrate_site('drupal7-migrate-drupal7-other', 'drupal7_other');
+  drush_provision_civicrm_tests_remove_site('drupal7-migrate-drupal7-other');
+  drush_provision_civicrm_tests_remove_platform('drupal7_other');
 
 
   // Create some sites, and upgrade them
   if ($drupal5_tests) {
-    drush_provision_tests_install_site('drupal5', 'drupal5-upgrade-drupal7', 'default');
-    drush_provision_tests_migrate_site('drupal5-upgrade-drupal7', 'drupal6');
-    drush_provision_tests_migrate_site('drupal5-upgrade-drupal7', 'drupal7');
-    drush_provision_tests_remove_site('drupal5-upgrade-drupal7');
+    drush_provision_civicrm_tests_install_site('drupal5', 'drupal5-upgrade-drupal7', 'default');
+    drush_provision_civicrm_tests_migrate_site('drupal5-upgrade-drupal7', 'drupal6');
+    drush_provision_civicrm_tests_migrate_site('drupal5-upgrade-drupal7', 'drupal7');
+    drush_provision_civicrm_tests_remove_site('drupal5-upgrade-drupal7');
   }
-  drush_provision_tests_install_site('drupal6', 'drupal6-upgrade-drupal7', 'default');
-  drush_provision_tests_migrate_site('drupal6-upgrade-drupal7', 'drupal7');
-  drush_provision_tests_remove_site('drupal6-upgrade-drupal7');
+  drush_provision_civicrm_tests_install_site('drupal6', 'drupal6-upgrade-drupal7', 'default');
+  drush_provision_civicrm_tests_migrate_site('drupal6-upgrade-drupal7', 'drupal7');
+  drush_provision_civicrm_tests_remove_site('drupal6-upgrade-drupal7');
 
   // Clean up a little.
   if ($drupal5_tests) {
-    drush_provision_tests_remove_platform('drupal5');
+    drush_provision_civicrm_tests_remove_platform('drupal5');
   }
-  drush_provision_tests_remove_platform('drupal6');
-  drush_provision_tests_remove_platform('drupal7');
-  drush_provision_tests_remove_platform('openatrium');
+  drush_provision_civicrm_tests_remove_platform('drupal6');
+  drush_provision_civicrm_tests_remove_platform('drupal7');
+  drush_provision_civicrm_tests_remove_platform('openatrium');
 */
 
   // Restore the tasks queue status:
