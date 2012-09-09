@@ -16,6 +16,8 @@ function provision_civicrm_drush_init() {
     $crmPath = _provision_civicrm_get_package_path();
     $include_path = $crmPath . "/packages/:" . get_include_path( );
     set_include_path( $include_path );
+
+    // _provision_civicrm_check_upgrade_mode();
   }
 }
 
@@ -23,6 +25,7 @@ function provision_civicrm_drush_init() {
  * Implements hook_civicrm_init()
  */
 function provision_civicrm_civicrm_init() {
+  // Log in a 'drush' subdirectory
   return provision_civicrm_setup_temp_directories();
 }
 
@@ -78,8 +81,7 @@ function provision_civicrm_setup_temp_directories() {
 function _provision_civicrm_create_civicron_user() {
   // Since 4.1, not necessary to create a dedicated user anymore
   // since we can run the cron as admin.
-  require_once 'CRM/Core/BAO/Domain.php';
-  $dbVer = CRM_Core_BAO_Domain::version();
+  $dbVer = _provision_civicrm_database_version();
 
   if (substr($dbVer, 0, 3) >= '4.1') {
     return;
@@ -243,8 +245,7 @@ function _provision_civicrm_fixresourceurls() {
   // merge in _provision_civicrm_fixpermissions() ?
   // NOTE: we check dbVer, and not codeVer, because the 4.1 upgrade
   // may not have been run yet (i.e. 4.0 -> 4.1 upgrade).
-  require_once 'CRM/Core/BAO/Domain.php';
-  $dbVer = CRM_Core_BAO_Domain::version();
+  $dbVer = _provision_civicrm_database_version();
 
   if (substr($dbVer, 0, 3) >= '4.1') {
     switch (drush_drupal_major_version()) {
@@ -453,7 +454,6 @@ function provision_civicrm_regenerate_settings() {
 function provision_civicrm_verify_common() {
   drush_log(dt("CiviCRM: in provision_civicrm_verify_common()."));
 
-
   // Set file acls on civicrm.settings.php, if necessary
   if (function_exists('provisionacl_set_acl')) {
     $group = d()->client_name;
@@ -489,6 +489,7 @@ function provision_civicrm_verify_common() {
   _provision_civicrm_fixpermissions();
 
   drush_log(dt("CiviCRM: leaving provision_civicrm_verify_common()."));
+  return TRUE;
 }
 
 /**
@@ -528,12 +529,8 @@ function _provision_civicrm_upgradedb() {
 
   // Still need to check if the DB and code versions are the same
   // so that we can avoid calling the upgrade on 'verify'.
-  require_once 'CRM/Core/Config.php';
-  require_once 'CRM/Utils/System.php';
-  require_once 'CRM/Core/BAO/Domain.php';
-
-  $codeVer = CRM_Utils_System::version();
-  $dbVer   = CRM_Core_BAO_Domain::version();
+  $codeVer = _provision_civicrm_codebase_version();
+  $dbVer   = _provision_civicrm_database_version();
 
   if (version_compare($codeVer, $dbVer) == 0) {
     drush_log(dt("CiviCRM: no upgrade required (@codeVer = @dbVer)", array('@codeVer' => $codeVer, '@dbVer' => $dbVer)), 'ok');
@@ -719,5 +716,74 @@ WHERE  name = %3 )
 
   drush_log(dt("CiviCRM: finished _provision_civicrm_do_site_move()."));
   return $moveStatus;
+}
+
+/**
+ * Check whether to set the upgrade mode
+ */
+function _provision_civicrm_check_upgrade_mode() {
+  // Sets the civicrm upgrade mode of the code/db version do not match
+/*
+  $codeVer = _provision_civicrm_codebase_version();
+  $dbVer = _provision_civicrm_database_version();
+ 
+  if (version_compare($codeVer, $dbVer) != 0) {
+    if (! defined('CIVICRM_UPGRADE_ACTIVE')) {
+      define('CIVICRM_UPGRADE_ACTIVE', 1);
+drush_log('**** UPGRADE MODE, yay!');
+      return TRUE;
+    }
+  }
+*/
+
+  if (! defined('CIVICRM_UPGRADE_ACTIVE')) {
+    define('CIVICRM_UPGRADE_ACTIVE', 1);
+    drush_log('**** UPGRADE MODE set');
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Helper function to get the CiviCRM version of the code base
+ */
+function _provision_civicrm_codebase_version() {
+  static $civicrm_version = 0;
+
+  if ($civicrm_version) {
+    return $civicrm_version;
+  }
+
+  _civicrm_init();
+  require_once 'CRM/Utils/System.php';
+
+  if (method_exists('CRM_Utils_System', 'version')) {
+    $civicrm_version = CRM_Utils_System::version();
+  }
+
+  return $civicrm_version;
+}
+
+/**
+ * Helper function to get the CiviCRM version of the DB
+ */
+function _provision_civicrm_database_version() {
+  $dbVer = 0;
+  $civicrmSettingsFile = d()->site_path . "/civicrm.settings.php";
+  include_once($civicrmSettingsFile);
+
+  switch (drush_drupal_major_version()) {
+    case 6:
+      $dbVer = db_result(db_query('select version from {civicrm_domain} where id = %d', CIVICRM_DOMAIN_ID));
+      break;
+
+    case 7:
+      $dbVer = db_query('select version from {civicrm_domain} where id = :id', array(':id' => CIVICRM_DOMAIN_ID))->fetchField();
+      break;
+  }
+
+  drush_log(dt('CiviCRM: db version is !ver', array('!ver' => $dbVer)));
+  return $dbVer;
 }
 
