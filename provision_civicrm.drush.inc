@@ -180,15 +180,30 @@ function _provision_civicrm_fixpermissions() {
   // Usually 'verify' will call civicrm_cache_clear() which will
   // delete most of the contents of template_c, but there have been
   // some hard to trace bugs, so we are not taking any chances.
+  //
+  // Also, civicrm_cache_clear() assumes that _civi_init() has been
+  // done, and if we init, then the Config.IDS.ini will be parsed.
+/* [ML] do not rely on _civi_init() to have been run yet.
   require_once 'CRM/Core/Config.php';
   $config = CRM_Core_Config::singleton( );
   $configFile = $config->configAndLogDir . 'Config.IDS.ini';
+*/
 
-  if (provision_file()->exists($configFile)->status()) {
-    provision_file()->unlink($configFile)
-      ->succeed('CiviCRM: Removing stale @path')
-      ->fail('CiviCRM: Could not remove @path')
-      ->status();
+  $configFiles = array(
+    '/files/civicrm/ConfigAndLog/Config.IDS.ini',
+    '/files/civicrm/drush/ConfigAndLog/Config.IDS.ini',
+    '/files/civicrm/templates_c/en_US/ConfigAndLog/Config.IDS.ini',
+  );
+
+  foreach ($configFiles as $c) {
+    $ids = d()->site_path . $c;
+
+    if (provision_file()->exists($ids)->status()) {
+      provision_file()->unlink($ids)
+        ->succeed('CiviCRM: Removing @path')
+        ->fail('CiviCRM: Could not remove @path')
+        ->status();
+    }
   }
 
   drush_log(dt("CiviCRM: finished _provision_civicrm_fixpermissions()"));
