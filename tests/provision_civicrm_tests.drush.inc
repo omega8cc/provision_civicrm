@@ -82,7 +82,7 @@ function drush_provision_civicrm_tests_run() {
   drush_provision_civicrm_tests_remove_platform('civicrm42d7_other');
 
   // Test the CiviCRM 3.4-D6 to 4.2-D7 upgrade
-  drush_provision_civicrm_tests_install_site('civicrm34d6', 'civicrm34d6-test-upgrade', 'drupal');
+  drush_provision_civicrm_tests_install_site('civicrm34d6', 'civicrm34d6-test-upgrade', 'default');
   drush_provision_civicrm_tests_migrate_site('civicrm34d6-test-migrate', 'civicrm42d7');
   drush_provision_civicrm_tests_remove_site('civicrm34d6-test-upgrade');
 
