@@ -730,7 +730,7 @@ function _provision_civicrm_check_upgrade_mode() {
   if (version_compare($codeVer, $dbVer) != 0) {
     if (! defined('CIVICRM_UPGRADE_ACTIVE')) {
       define('CIVICRM_UPGRADE_ACTIVE', 1);
-drush_log('**** UPGRADE MODE, yay!');
+      drush_log(dt('CiviCRM: upgrade mode enabled.'));
       return TRUE;
     }
   }
@@ -738,7 +738,7 @@ drush_log('**** UPGRADE MODE, yay!');
 
   if (! defined('CIVICRM_UPGRADE_ACTIVE')) {
     define('CIVICRM_UPGRADE_ACTIVE', 1);
-    drush_log('**** UPGRADE MODE set');
+    drush_log(dt('CiviCRM: upgrade mode enabled.'));
     return TRUE;
   }
 
