@@ -26,6 +26,30 @@ function drush_civicrm_pre_provision_verify($url = NULL) {
 }
 
 /**
+ * Implements hook_provision_verify().
+ */
+function drush_civicrm_provision_verify($url = NULL) {
+  if (! _provision_civicrm_is_site_context()) {
+    return;
+  }
+
+  drush_log(dt("CiviCRM: Running drush_civicrm_provision_verify"));
+
+  // This needs to be done before we initialize CiviCRM,
+  // otherwise we will load with an old include path (civicrm_root).
+  provision_civicrm_regenerate_settings();
+
+  // Most importantly, get rid of the Config.IDS.ini
+  _provision_civicrm_fixpermissions();
+
+  // Enabling the upgrade mode (if necessary) will avoid pesky issues
+  // during the Drupal upgrade.
+  _provision_civicrm_check_upgrade_mode();
+
+  drush_log(dt("CiviCRM: Finished drush_civicrm_provision_verify"));
+}
+
+/**
  * Implements hook_post_provision_verify().
  *
  * Persist civicrm settings in the drushrc.php
@@ -43,13 +67,8 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     return;
   }
 
-  drush_log(dt("CiviCRM: Running drush_civicrm_post_provision_verify"));
-
-  // This needs to be done before we initialize CiviCRM,
-  // otherwise we will load with an old include path (civicrm_root).
-  provision_civicrm_regenerate_settings();
-
   _civicrm_init();
+  _provision_civicrm_check_upgrade_mode();
 
   // verify might return fail if, for example, this is a very old version of CiviCRM
   // in which case, no point continuing with the upgrade and cache clear.
