@@ -371,8 +371,7 @@ civicrm_setup("$siteRoot/files"); // [ML]
 function _civicrm_generate_settings_file( $dbuser, $dbpass, $dbhost, $dbname, $sitekey = NULL ) {
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
     $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
-    // [ML] $crmPath    = "$drupalRoot/$siteRoot/modules/civicrm";
-    $crmPath    = "$drupalRoot/sites/all/modules/civicrm";
+    $crmPath    = _provision_civicrm_get_package_path();
 
 // [ML]
 $site_alias_info = drush_get_context('alias');
