@@ -98,11 +98,16 @@ function provision_civicrm_provision_apache_vhost_config($data = null) {
   }
 
   $cividir = d()->site_path . '/files/civicrm';
+  $contribdir = $cividir . '/persist/contribute';
 
   $htaccess  = 
       "<Directory \"$cividir\">\n"
     . "  Order allow,deny\n"
     . "  Deny from all\n"
+    . "</Directory>\n"
+    . "<Directory \"$contribdir\">\n"
+    . "  Order allow,deny\n"
+    . "  Allow from all\n"
     . "</Directory>\n";
 
   return $htaccess;
