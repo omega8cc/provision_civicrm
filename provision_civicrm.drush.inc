@@ -227,8 +227,14 @@ function _provision_civicrm_fixresourceurls() {
   // ex: /var/aegir/platforms/example-civicrm-3.4.x/ (for strlen below)
   $drupal_basepath = drush_get_context('DRUSH_DRUPAL_ROOT');
 
+  drush_log(dt('CiviCRM: drupal_basepath is @path', array('@path' => $drupal_basepath)));
+
+  drush_log(dt('CiviCRM: original civicrm_modulepath is @path', array('@path' => $civicrm_modulepath)));
+
   // Remove the part up until the Drupal root, so that we have only the part exposed to the web
   $civicrm_modulepath = substr($civicrm_modulepath, strlen($drupal_basepath) + 1);
+
+  drush_log(dt('CiviCRM: substr-ed civicrm_modulepath is @path', array('@path' => $civicrm_modulepath)));
 
   // force a full URL otherwise there may be i18n issues, ex: http://example.org/en/sites/all/modules/civicrm
   $civicrm_resourceurl = 'http://' . drush_get_option('uri') . '/' . $civicrm_modulepath;
