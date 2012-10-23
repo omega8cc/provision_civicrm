@@ -343,11 +343,21 @@ function _provision_civicrm_get_package_path() {
   $module = _provision_civicrm_get_package_info();
 
   if ($module) {
-    // Get the parent directory of the module, which is in civicrm/drupal/civicrm.module
-    $crmpath = dirname(dirname($module['filename']));
-    drush_log(dt('CiviCRM: civicrm is in @path', array('@path' => $crmpath)));
-    return $crmpath;
+    $drupal_basepath = drush_get_context('DRUSH_DRUPAL_ROOT');
+    $local_civicrm_modulepath = "sites/all/modules/civicrm";
+    $crmpath = $drupal_basepath . "/" . $local_civicrm_modulepath;
+    if (file_exists($crmpath)) {
+      drush_log(dt('CiviCRM: civicrm is in @path', array('@path' => $crmpath)));
+      return $crmpath;
+    }
   }
+
+//   if ($module) {
+//     // Get the parent directory of the module, which is in civicrm/drupal/civicrm.module
+//     $crmpath = dirname(dirname($module['filename']));
+//     drush_log(dt('CiviCRM: civicrm is in @path', array('@path' => $crmpath)));
+//     return $crmpath;
+//   }
 
   return FALSE;
 }
