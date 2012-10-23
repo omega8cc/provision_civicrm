@@ -145,7 +145,7 @@ function _provision_civicrm_fixpermissions() {
 
   // Make sure the template_c and uploads have the correct permissions
   $civipaths = array(
-    '/files/civicrm/templates_c', 
+    '/files/civicrm/templates_c',
     '/files/civicrm/upload',
     '/files/civicrm/persist',
   );
@@ -321,7 +321,7 @@ function _provision_civicrm_drush_options($op = 'unknown') {
 /**
  * Check we are in a civicrm site context
  */
-function _provision_civicrm_is_site_context($op = 'unkown') {
+function _provision_civicrm_is_site_context($op = 'unknown') {
   if (d()->type == 'site') {
     $crmpath = _provision_civicrm_get_package_path();
     return ($crmpath ? TRUE : FALSE);
@@ -512,8 +512,8 @@ function _provision_civicrm_upgradedb() {
     return;
   }
 
-  if (! defined('CIVICRM_UPGRADE_ACTIVE')) { 
-    define('CIVICRM_UPGRADE_ACTIVE', 1); 
+  if (! defined('CIVICRM_UPGRADE_ACTIVE')) {
+    define('CIVICRM_UPGRADE_ACTIVE', 1);
   }
 
   _civicrm_init();
@@ -726,7 +726,7 @@ function _provision_civicrm_check_upgrade_mode() {
 /*
   $codeVer = _provision_civicrm_codebase_version();
   $dbVer = _provision_civicrm_database_version();
- 
+
   if (version_compare($codeVer, $dbVer) != 0) {
     if (! defined('CIVICRM_UPGRADE_ACTIVE')) {
       define('CIVICRM_UPGRADE_ACTIVE', 1);
