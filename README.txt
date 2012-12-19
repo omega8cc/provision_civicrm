@@ -35,6 +35,13 @@ Verify the platform once the module has been added.
 When creating a new site, provision_civicrm will detect the presence
 of CiviCRM in the platform and will install/configure it automatically.
 
+
+Running tests
+-------------
+
+See: http://drupal.org/project/vagrant_scripts_aegir_civicrm
+
+
 Todo
 ----
 
