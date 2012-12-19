@@ -533,9 +533,11 @@ function drush_civicrm_upgrade_db() {
   if (class_exists('CRM_Upgrade_Headless')) {
     // Note: CRM_Upgrade_Headless introduced in 4.2 -- at the same time as class auto-loading
     $upgradeHeadless = new CRM_Upgrade_Headless();
-    $result = $upgradeHeadless->run(); // FIXME Exception handling?
-    drush_print("Upgrade outputs: " . "\"".$result['message']."\"");
-  } else {
+    // FIXME Exception handling?
+    $result = $upgradeHeadless->run();
+    drush_print("Upgrade outputs: " . "\"" . $result['message'] . "\"");
+  }
+  else {
     require_once 'CRM/Core/Smarty.php';
     $template = CRM_Core_Smarty::singleton();
 
@@ -568,13 +570,13 @@ function drush_civicrm_update_cfg_validate() {
  * Implementation of command 'civicrm-update-cfg'
  */
 function drush_civicrm_update_cfg() {
-  $defaultValues = array( );
-  $states = array( 'old', 'new' );
-  for ( $i = 1 ; $i <= 3; $i++ ) {
-    foreach ( $states as $state ) {
+  $defaultValues = array();
+  $states = array('old', 'new');
+  for ($i = 1; $i <= 3; $i++) {
+    foreach ($states as $state) {
       $name = "{$state}Val_{$i}";
-      $value = drush_get_option( $name, null );
-      if ( $value ) {
+      $value = drush_get_option($name, NULL);
+      if ($value) {
         $defaultValues[$name] = $value;
       }
     }
@@ -668,6 +670,9 @@ function drush_civicrm_upgrade_validate() {
   return _civicrm_init();
 }
 
+/**
+ * Implementation of command 'civicrm-upgrade'
+ */
 function drush_civicrm_upgrade() {
   global $civicrm_root;
 
@@ -677,7 +682,7 @@ function drush_civicrm_upgrade() {
 
   $basepath = explode('/', $civicrm_root);
   array_pop($basepath);
-  $project_path = implode('/', $basepath). '/';
+  $project_path = implode('/', $basepath) . '/';
 
   $drupal_root = drush_get_context('DRUSH_DRUPAL_ROOT');
   $backup_dir  = drush_get_option('backup-dir', $drupal_root . '/../backup');
@@ -685,11 +690,11 @@ function drush_civicrm_upgrade() {
 
   drush_print(dt("\nThe upgrade process involves - "));
   drush_print(dt("1. Backing up current CiviCRM code as => !path",
-                 array('!path' => "$backup_dir/modules/$date/$backup_file")));
+      array('!path' => "$backup_dir/modules/$date/$backup_file")));
   drush_print(dt("2. Backing up database as => !path",
-                 array('!path' => "$backup_dir/modules/$date/$backup_file.sql")));
+      array('!path' => "$backup_dir/modules/$date/$backup_file.sql")));
   drush_print(dt("3. Unpacking tarfile to => !path",
-                 array('!path' => "$project_path")));
+      array('!path' => "$project_path")));
   drush_print(dt("4. Executing civicrm/upgrade?reset=1 just as a browser would.\n"));
   if (!drush_confirm(dt('Do you really want to continue?'))) {
     return drush_user_abort();
@@ -700,9 +705,9 @@ function drush_civicrm_upgrade() {
   @drush_op('mkdir', $backup_dir, 0777);
   $backup_dir .= "/$date";
   @drush_op('mkdir', $backup_dir, 0777);
-  $backup_target = $backup_dir . '/'. $backup_file;
+  $backup_target = $backup_dir . '/' . $backup_file;
   if (!drush_op('rename', $civicrm_root, $backup_target)) {
-    return drush_set_error('CIVICRM_BACKUP_FAILED', dt('Failed to backup CiviCRM project directory !source to !backup_target', 
+    return drush_set_error('CIVICRM_BACKUP_FAILED', dt('Failed to backup CiviCRM project directory !source to !backup_target',
         array('!source' => $civicrm_root, '!backup_target' => $backup_target)
       ));
   }
@@ -767,7 +772,7 @@ function drush_civicrm_restore() {
   global $civicrm_root;
   $civicrm_root_base = explode('/', $civicrm_root);
   array_pop($civicrm_root_base);
-  $civicrm_root_base = implode('/', $civicrm_root_base). '/';
+  $civicrm_root_base = implode('/', $civicrm_root_base) . '/';
 
   $drupal_root = drush_get_context('DRUSH_DRUPAL_ROOT');
   $restore_backup_dir = drush_get_option('backup-dir', $drupal_root . '/../backup');
@@ -910,6 +915,9 @@ function drush_civicrm_rest_validate() {
   return _civicrm_init();
 }
 
+/**
+ * Implementation of command 'civicrm-rest' ('cvr')
+ */
 function drush_civicrm_rest() {
   $query     = drush_get_option('query', FALSE);
   $query     = explode('&', $query);
@@ -1278,6 +1286,8 @@ function _civicrm_get_crmpath() {
 
 /**
  * (Drush callback)
+ *
+ * Implementation of command 'civicrm-api'
  */
 function drush_civicrm_api_validate() {
   return _civicrm_init();
