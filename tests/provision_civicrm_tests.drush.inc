@@ -88,9 +88,9 @@ function drush_provision_civicrm_tests_run() {
 
   // Create some sites and migrate them.
   // Test migrate from 4.2-D7 to 4.2-D7
-  drush_log(dt('*****'));
-  drush_log(dt('***** CiviCRM TEST: migrate from 4.2-D7 to 4.2-D7.'));
-  drush_log(dt('*****'));
+  drush_log(dt('*****'), 'ok');
+  drush_log(dt('***** CiviCRM TEST: migrate from 4.2-D7 to 4.2-D7.'), 'ok');
+  drush_log(dt('*****'), 'ok');
 
   drush_provision_civicrm_tests_install_platform('civicrm42d7', 'civicrm42d7_other');
   drush_provision_civicrm_tests_install_site('civicrm42d7', 'civicrm42d7-test-migrate', 'standard');
@@ -99,18 +99,18 @@ function drush_provision_civicrm_tests_run() {
   drush_provision_civicrm_tests_remove_platform('civicrm42d7_other');
 
   // Test the CiviCRM 3.4-D6 to 4.2-D7 upgrade
-  drush_log(dt('*****'));
-  drush_log(dt('***** CiviCRM TEST: migrate from 3.4-D6 to 4.2-D7.'));
-  drush_log(dt('*****'));
+  drush_log(dt('*****'), 'ok');
+  drush_log(dt('***** CiviCRM TEST: migrate from 3.4-D6 to 4.2-D7.'), 'ok');
+  drush_log(dt('*****'), 'ok');
 
   drush_provision_civicrm_tests_install_site('civicrm34d6', 'civicrm34d6-test-upgrade', 'default');
   drush_provision_civicrm_tests_migrate_site('civicrm34d6-test-migrate', 'civicrm42d7');
   drush_provision_civicrm_tests_remove_site('civicrm34d6-test-upgrade');
 
   // Test the CiviCRM 4.0-D7 to 4.2-D7 upgrade
-  drush_log(dt('*****'));
-  drush_log(dt('***** CiviCRM TEST: migrate from 4.0-D7 to 4.2-D7.'));
-  drush_log(dt('*****'));
+  drush_log(dt('*****'), 'ok');
+  drush_log(dt('***** CiviCRM TEST: migrate from 4.0-D7 to 4.2-D7.'), 'ok');
+  drush_log(dt('*****'), 'ok');
 
   drush_provision_civicrm_tests_install_site('civicrm40d7', 'civicrm40d7-test-upgrade', 'standard');
   drush_provision_civicrm_tests_migrate_site('civicrm40d7-test-migrate', 'civicrm42d7');
@@ -119,6 +119,10 @@ function drush_provision_civicrm_tests_run() {
   // TODO: test the multi-lingual upgrade
 
   // Clean up a little.
+  drush_log(dt('*****'), 'ok');
+  drush_log(dt('***** CiviCRM TEST: Removing platforms.'), 'ok');
+  drush_log(dt('*****'), 'ok');
+
   if ($drupal5_tests) {
     drush_provision_civicrm_tests_remove_platform('civicrm17d5');
   }
