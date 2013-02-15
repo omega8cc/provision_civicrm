@@ -25,6 +25,19 @@ function drush_civicrm_pre_provision_deploy($url = NULL) {
 }
 
 /**
+ * Implements hook_provision_deploy().
+ */
+function drush_civicrm_provision_deploy() {
+  // This needs to be done before we initialize CiviCRM,
+  // otherwise we will load with an old include path (civicrm_root).
+  //
+  // c.f. #1907884 The Drupal cache clear in drupal's post_provision hook
+  // causes CiviCRM 4.2 to call civicrm_initialize() before we have had the
+  // time to regenerate the settings.
+  provision_civicrm_regenerate_settings();
+}
+
+/**
  * Implements hook_post_provision_deploy().
  */
 function drush_civicrm_post_provision_deploy() {
