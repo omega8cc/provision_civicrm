@@ -1,0 +1,10 @@
+api = 2
+
+core = 7.x
+projects[] = "drupal"
+
+projects[civicrm][type] = "module"
+projects[civicrm][directory_name] = "civicrm"
+projects[civicrm][download][type] = "get"
+projects[civicrm][download][url] = "http://downloads.sourceforge.net/project/civicrm/civicrm-latest/4.3.alpha2/civicrm-4.3.alpha2-drupal.tar.gz"
+projects[civicrm][patch][] = "http://drupal.org/files/1907884-provision_civicrm_debugsettings-civicrm427.patch"
