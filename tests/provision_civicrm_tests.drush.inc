@@ -237,7 +237,7 @@ function drush_provision_civicrm_tests_remove_site($site) {
 function drush_provision_civicrm_tests_migrate_site($site, $target) {
   drush_log(dt('Migrating: @site to platform: @platform.', array('@site' => "$site.aegir.example.com", '@platform' => $target)), 'ok');
   // Do the migrate.
-  provision_backend_invoke("@$site.aegir.example.com", 'provision-migrate', array("@platform_$target",));
+  provision_backend_invoke("@$site.aegir.example.com", 'provision-migrate', array("@platform_$target", "--debug"));
   // Import the site into the frontend.
   provision_backend_invoke('@hostmaster', 'hosting-import', array("@$site.aegir.example.com",));
   // Verify the $target platform.
