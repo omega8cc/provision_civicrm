@@ -352,13 +352,6 @@ function _provision_civicrm_get_package_path() {
     }
   }
 
-//   if ($module) {
-//     // Get the parent directory of the module, which is in civicrm/drupal/civicrm.module
-//     $crmpath = dirname(dirname($module['filename']));
-//     drush_log(dt('CiviCRM: civicrm is in @path', array('@path' => $crmpath)));
-//     return $crmpath;
-//   }
-
   return FALSE;
 }
 
