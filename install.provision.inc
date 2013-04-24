@@ -84,38 +84,7 @@ function drush_civicrm_post_provision_install($url = null) {
 
     // Enable civicrm module before setting up civicron role,
     // as we need it to expose its permissions.
-    $this_module = "civicrm";
-    drush_log(dt("CiviCRM: Enabling CiviCRM Module."), 'ok');
-    $module = _provision_civicrm_get_package_info();
-    if (drush_drupal_major_version() >= 7) {
-      include_once DRUPAL_ROOT . '/includes/install.inc';
-      drupal_load('module', $this_module);
-      module_load_install($this_module);
-      db_update('system')
-        ->fields(array('status' => 1))
-        ->condition('type', 'module')
-        ->condition('name', $this_module)
-        ->execute();
-      system_list_reset();
-      module_list(TRUE);
-      module_implements('', FALSE, TRUE);
-      _system_update_bootstrap_status();
-      registry_update();
-      drupal_get_schema(NULL, TRUE);
-      drupal_theme_rebuild();
-      entity_info_cache_clear();
-      drupal_install_schema($this_module);
-      module_invoke($this_module, 'install');
-      module_invoke($this_module, 'enable');
-    }
-    else {
-      module_load_install($this_module);
-      db_query("UPDATE {system} SET status = %d, throttle = %d WHERE type = '%s' AND name = '%s'", 1, 0, 'module', $this_module);
-      drupal_load('module', $this_module);
-      module_list(TRUE, FALSE);
-      module_implements('', FALSE, TRUE);
-      module_invoke($this_module, 'enable');
-    }
+    module_enable(array('civicrm'));
 
     drush_log(dt("CiviCRM: Creating CiviCron User."), 'ok');
     _provision_civicrm_create_civicron_user();
