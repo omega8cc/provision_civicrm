@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -110,6 +110,9 @@ function civicrm_drush_command() {
   );
   $items['civicrm-enable-debug'] = array(
     'description' => "Enable CiviCRM Debugging.",
+  );
+  $items['civicrm-disable-debug'] = array(
+    'description' => "Disable CiviCRM Debugging.",
   );
   $items['civicrm-upgrade'] = array(
     'description' => "Replace CiviCRM codebase with new specified tarfile and upgrade database by executing the CiviCRM upgrade process - civicrm/upgrade?reset=1.",
@@ -643,13 +646,46 @@ function drush_civicrm_enable_debug_validate() {
 }
 
 function drush_civicrm_enable_debug() {
-  $params['debug'] = 1;
-  $params['backtrace'] = 1;
+  $settings = array(
+    'debug_enabled' => 1,
+    'backtrace' => 1,
+  );
 
-  require_once 'CRM/Admin/Form/Setting.php';
-  CRM_Admin_Form_Setting::commonProcess($params);
+  foreach ($settings as $key => $val) {
+    $result = civicrm_api('Setting', 'create', array('version' => 3, $key => $val));
 
-  drush_log(dt('Debug setting enabled.'), 'ok');
+    if ($result['is_error']) {
+      drush_log(dt('An error occured: !message', array('!message' => $result['error_message'])), 'error');
+      return;
+    }
+  }
+
+  drush_log(dt('CiviCRM debug setting enabled.'), 'ok');
+}
+
+/**
+ * Implementation of drush_hook_COMMAND_validate for command 'civicrm-disable-debug'
+ */
+function drush_civicrm_disable_debug_validate() {
+  return _civicrm_init();
+}
+
+function drush_civicrm_disable_debug() {
+  $settings = array(
+    'debug_enabled' => 0,
+    'backtrace' => 0,
+  );
+
+  foreach ($settings as $key => $val) {
+    $result = civicrm_api('Setting', 'create', array('version' => 3, $key => $val));
+
+    if ($result['is_error']) {
+      drush_log(dt('An error occured: !message', array('!message' => $result['error_message'])), 'error');
+      return;
+    }
+  }
+
+  drush_log(dt('CiviCRM debug setting disabled.'), 'ok');
 }
 
 /**
