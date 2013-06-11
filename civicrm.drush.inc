@@ -217,6 +217,9 @@ function civicrm_drush_command() {
         'Standard example' => 'drush civicrm-csv-import Contact contacts.csv',
       ),
     );
+  $items['civicrm-encryptdb'] = array(
+    'description' => 'Anonymise the database by running md5 on contact names and addresses. Do not use this on a production site!',
+  );
 
   return $items;
 }
@@ -1402,3 +1405,68 @@ function drush_civicrm_api() {
       return drush_set_error('CIVICRM_UNKNOWN_FORMAT', dt('Unknown format: @format', array('@format' => $format)));
   }
 }
+
+/**
+ * (Drush callback)
+ *
+ * Implementation of command 'civicrm-encryptdb'
+ * FIXME: move this code to CRM/Utils/DBEncrypter.php
+ */
+function drush_civicrm_encryptdb_validate() {
+  return _civicrm_init();
+}
+
+function drush_civicrm_encryptdb() {
+  define('CRM_ENCRYPT', 1);
+  define('CRM_SETNULL', 2);
+
+  $tables = array(
+    'civicrm_contact' => array(
+      'first_name' => CRM_ENCRYPT,
+      'last_name' => CRM_ENCRYPT,
+      'organization_name' => CRM_ENCRYPT,
+      'household_name' => CRM_ENCRYPT,
+      'sort_name' => CRM_ENCRYPT,
+      'display_name' => CRM_ENCRYPT,
+      'legal_name' => CRM_ENCRYPT,
+    ),
+    'civicrm_address' => array(
+      'street_address' => CRM_ENCRYPT,
+      'supplemental_address_1' => CRM_ENCRYPT,
+      'supplemental_address_2' => CRM_ENCRYPT,
+      'city' => CRM_ENCRYPT,
+      'postal_code' => CRM_SETNULL,
+      'postal_code_suffix' => CRM_SETNULL,
+      'geo_code_1' => CRM_SETNULL,
+      'geo_code_2' => CRM_SETNULL,
+    ),
+    'civicrm_website' => array(
+      'url' => CRM_ENCRYPT,
+    ),
+    'civicrm_email' => array(
+      'email' => CRM_ENCRYPT,
+    ),
+    'civicrm_phone' => array(
+      'phone' => CRM_ENCRYPT,
+    ),
+  );
+
+  foreach ($tables as $tableName => $fields) {
+    $clauses = array();
+    foreach ($fields as $fieldName => $action) {
+      if ($action == CRM_ENCRYPT) {
+        $clauses[] = "$fieldName = md5($fieldName)";
+      }
+      elseif ($action == CRM_SETNULL) {
+        $clauses[] = "$fieldName = null";
+      }
+    }
+
+    if (!empty($clauses)) {
+      $clause = implode(',', $clauses);
+      $query = "UPDATE $tableName SET $clause";
+      CRM_Core_DAO::executeQuery($query);
+    }
+  }
+}
+
