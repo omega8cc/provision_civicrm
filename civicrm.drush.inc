@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -111,6 +111,9 @@ function civicrm_drush_command() {
   $items['civicrm-enable-debug'] = array(
     'description' => "Enable CiviCRM Debugging.",
   );
+  $items['civicrm-disable-debug'] = array(
+    'description' => "Disable CiviCRM Debugging.",
+  );
   $items['civicrm-upgrade'] = array(
     'description' => "Replace CiviCRM codebase with new specified tarfile and upgrade database by executing the CiviCRM upgrade process - civicrm/upgrade?reset=1.",
     'examples'    => array(
@@ -214,6 +217,9 @@ function civicrm_drush_command() {
         'Standard example' => 'drush civicrm-csv-import Contact contacts.csv',
       ),
     );
+  $items['civicrm-encryptdb'] = array(
+    'description' => 'Anonymise the database by running md5 on contact names and addresses. Do not use this on a production site!',
+  );
 
   return $items;
 }
@@ -643,13 +649,46 @@ function drush_civicrm_enable_debug_validate() {
 }
 
 function drush_civicrm_enable_debug() {
-  $params['debug'] = 1;
-  $params['backtrace'] = 1;
+  $settings = array(
+    'debug_enabled' => 1,
+    'backtrace' => 1,
+  );
 
-  require_once 'CRM/Admin/Form/Setting.php';
-  CRM_Admin_Form_Setting::commonProcess($params);
+  foreach ($settings as $key => $val) {
+    $result = civicrm_api('Setting', 'create', array('version' => 3, $key => $val));
 
-  drush_log(dt('Debug setting enabled.'), 'ok');
+    if ($result['is_error']) {
+      drush_log(dt('An error occured: !message', array('!message' => $result['error_message'])), 'error');
+      return;
+    }
+  }
+
+  drush_log(dt('CiviCRM debug setting enabled.'), 'ok');
+}
+
+/**
+ * Implementation of drush_hook_COMMAND_validate for command 'civicrm-disable-debug'
+ */
+function drush_civicrm_disable_debug_validate() {
+  return _civicrm_init();
+}
+
+function drush_civicrm_disable_debug() {
+  $settings = array(
+    'debug_enabled' => 0,
+    'backtrace' => 0,
+  );
+
+  foreach ($settings as $key => $val) {
+    $result = civicrm_api('Setting', 'create', array('version' => 3, $key => $val));
+
+    if ($result['is_error']) {
+      drush_log(dt('An error occured: !message', array('!message' => $result['error_message'])), 'error');
+      return;
+    }
+  }
+
+  drush_log(dt('CiviCRM debug setting disabled.'), 'ok');
 }
 
 /**
@@ -1366,3 +1405,68 @@ function drush_civicrm_api() {
       return drush_set_error('CIVICRM_UNKNOWN_FORMAT', dt('Unknown format: @format', array('@format' => $format)));
   }
 }
+
+/**
+ * (Drush callback)
+ *
+ * Implementation of command 'civicrm-encryptdb'
+ * FIXME: move this code to CRM/Utils/DBEncrypter.php
+ */
+function drush_civicrm_encryptdb_validate() {
+  return _civicrm_init();
+}
+
+function drush_civicrm_encryptdb() {
+  define('CRM_ENCRYPT', 1);
+  define('CRM_SETNULL', 2);
+
+  $tables = array(
+    'civicrm_contact' => array(
+      'first_name' => CRM_ENCRYPT,
+      'last_name' => CRM_ENCRYPT,
+      'organization_name' => CRM_ENCRYPT,
+      'household_name' => CRM_ENCRYPT,
+      'sort_name' => CRM_ENCRYPT,
+      'display_name' => CRM_ENCRYPT,
+      'legal_name' => CRM_ENCRYPT,
+    ),
+    'civicrm_address' => array(
+      'street_address' => CRM_ENCRYPT,
+      'supplemental_address_1' => CRM_ENCRYPT,
+      'supplemental_address_2' => CRM_ENCRYPT,
+      'city' => CRM_ENCRYPT,
+      'postal_code' => CRM_SETNULL,
+      'postal_code_suffix' => CRM_SETNULL,
+      'geo_code_1' => CRM_SETNULL,
+      'geo_code_2' => CRM_SETNULL,
+    ),
+    'civicrm_website' => array(
+      'url' => CRM_ENCRYPT,
+    ),
+    'civicrm_email' => array(
+      'email' => CRM_ENCRYPT,
+    ),
+    'civicrm_phone' => array(
+      'phone' => CRM_ENCRYPT,
+    ),
+  );
+
+  foreach ($tables as $tableName => $fields) {
+    $clauses = array();
+    foreach ($fields as $fieldName => $action) {
+      if ($action == CRM_ENCRYPT) {
+        $clauses[] = "$fieldName = md5($fieldName)";
+      }
+      elseif ($action == CRM_SETNULL) {
+        $clauses[] = "$fieldName = null";
+      }
+    }
+
+    if (!empty($clauses)) {
+      $clause = implode(',', $clauses);
+      $query = "UPDATE $tableName SET $clause";
+      CRM_Core_DAO::executeQuery($query);
+    }
+  }
+}
+
