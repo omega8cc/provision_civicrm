@@ -388,8 +388,15 @@ $siteRoot = $site_alias_info['site_path'];
 
   # [ML] CRM-7416 : the tpl of civicrm does not have a variable for the siteKey
   # Fixed in CiviCRM 3.4
-  $settingsTplFile = "$crmPath/templates/CRM/common/civicrm.settings.php.tpl";
+  # Starting CiviCRM 4.4, the file was renamed to .template (was .tpl)
+  $settingsTplFile = "$crmPath/templates/CRM/common/civicrm.settings.php.template";
+
   if (!file_exists($settingsTplFile)) {
+    $settingsTplFile = "$crmPath/templates/CRM/common/civicrm.settings.php.tpl";
+  }
+
+  if (!file_exists($settingsTplFile)) {
+    drush_log(dt("Could not find CiviCRM settings template and therefore could not create settings file.", 'error'));
     drush_die(dt("Could not find CiviCRM settings template and therefore could not create settings file."));
   }
 
