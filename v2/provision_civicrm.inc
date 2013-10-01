@@ -19,7 +19,10 @@ include_once(dirname(__FILE__) . '/verify.provision.inc');
  */
 function provision_civicrm_provision_services() {
   provision_civicrm_provision_register_autoload();
-  return array('civicrm' => NULL);
+  return array(
+    'civicrm' => NULL,
+    'civicrm_db' => NULL,
+  );
 }
 
 /**
