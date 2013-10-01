@@ -12,6 +12,17 @@ include_once(dirname(__FILE__) . '/migrate.provision.inc');
 include_once(dirname(__FILE__) . '/verify.provision.inc');
 
 /**
+ * Expose the service type this extension defines to provision.
+ *
+ * @return
+ *   An array with the service type the key, and the default implementation the value.
+ */
+function provision_civicrm_provision_services() {
+  provision_civicrm_provision_register_autoload();
+  return array('civicrm' => NULL);
+}
+
+/**
  * Implements hook_civicrm_init()
  */
 function provision_civicrm_civicrm_init() {
