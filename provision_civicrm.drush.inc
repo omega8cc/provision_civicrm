@@ -6,6 +6,11 @@
  * Common functions used by install and verify.
  */
 
+include_once(dirname(__FILE__) . '/includes/deploy.provision.inc');
+include_once(dirname(__FILE__) . '/includes/install.provision.inc');
+include_once(dirname(__FILE__) . '/includes/migrate.provision.inc');
+include_once(dirname(__FILE__) . '/includes/verify.provision.inc');
+
 /**
  * Implements hook_drush_init().
  */
