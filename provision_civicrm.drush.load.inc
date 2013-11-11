@@ -6,5 +6,6 @@
  * Checks if the corresponsing Hosting Feature is enabled.
  */
 function provision_civicrm_drush_load() {
-  return in_array('civicrm', drush_get_option('hosting_features', array()));
+  $features = drush_get_option('hosting_features', array());
+  return array_key_exists('civicrm', $features) && $features['civicrm'];
 }
