@@ -11,6 +11,10 @@
  */
 function provision_civicrm_drush_init() {
   if (_provision_civicrm_is_site_context()) {
+    // #8420965 Reset the classloader drupal variable in case we are migrating
+    // from a platform to another.
+    drush_variable_delete('civicrm_class_loader');
+
     // if other modules use PEAR (ex: print_mail), it may cause a PHP conflict
     // so declare our own include path here. See: #1431874
     $crmPath = _provision_civicrm_get_package_path();
