@@ -12,10 +12,10 @@ Project home page:
 http://drupal.org/project/provision_civicrm
 
 CiviCRM home page:
-http://www.civicrm.org
+https://www.civicrm.org
 
 Aegir project:
-http://http://www.aegirproject.org/
+http://www.aegirproject.org/
 http://community.aegirproject.org/contrib-modules/provision-civicrm
 
 
@@ -42,20 +42,6 @@ Running tests
 See: http://drupal.org/project/vagrant_scripts_aegir_civicrm
 
 
-Todo
-----
-
-* use Aegir variables in civicrm.settings.php so that the database
-  details are not readable by other users on the server (as is the
-  case in settings.php).
-* have a clean civicrm.drush.inc (improve upstream)  CRM-9986
-* support for installing civicrm in a different DB? Issue #1097496
-* configure crons automatically (civimail, civimember) Issue #1097554
-* better support for install profiles. Issue #1309550
-* install CiviCRM when migrating from non-civi to civi platform. Issue #1127252
-* support non-english installations. Issue #1485920
-
-
 Support
 -------
 
@@ -67,22 +53,25 @@ IRC channel on irc.freenode.org, but keep in mind that most
 active people in those channels do not necessarely use this
 module. You can try to ping the module maintaner, 'bgm'.
 
-Commercial support is also possible:
+Commercial hosting, support and development is also possible:
 
-* From the module maintainer: http://www.bidon.ca/en/about
-* From Koumbit: http://www.koumbit.org
-* Aegir service providers: http://community.aegirproject.org/service-providers
+* Praxis Labs Coop <http://praxis.coop/> (hosting, support, dev)
+* Coop SymbioTIC <https://www.symbiotic.coop> (dev)
+* Omera8.cc <https://omega8.cc/> (hosting)
+* Civi-go <http://civigo.net/> (hosting, dev via Ixiam.com)
+* Koumbit <http://www.koumbit.org> (hosting)
+* Progressive Technology Project <http://www.progressivetech.org/> (hosting)
 
-Koumbit and omega8.cc hosting solutions support provision_civicrm.
+Other Aegir service providers: http://community.aegirproject.org/service-providers
 
 If you appreciate this module, please consider donating to either CiviCRM
 or the Aegir project.
 
-http://civicrm.org/what/supportus
+https://civicrm.org/participate/support-civicrm
 http://community.aegirproject.org/donate
 
 You can also send the module maintainer a beer:
-http://www.bidon.ca/en/paypal
+https://www.bidon.ca/en/paypal
 
 
 Credits
@@ -98,7 +87,19 @@ https://drupal.org/user/89461, with the help of many contributors
 https://drupal.org/node/1063394/committers and with great support from
 the CiviCRM core team and community.
 
-Koumbit.org has co-sponsored the development of the module since spring 2010
-and members of their team continue to contribute actively, as well as being
-a major user of the module.
+Thanks to Koumbit, Praxis, Ixiam, PTP and JMA consulting for financially
+supporting the development of this module.
 
+
+Todo
+----
+
+* use Aegir variables in civicrm.settings.php so that the database
+  details are not readable by other users on the server (as is the
+  case in settings.php).
+* have a clean civicrm.drush.inc (improve upstream)  CRM-9986
+* support for installing civicrm in a different DB? Issue #1097496
+* configure crons automatically (civimail, civimember) Issue #1097554
+* better support for install profiles. Issue #1309550
+* install CiviCRM when migrating from non-civi to civi platform. Issue #1127252
+* support non-english installations. Issue #1485920
