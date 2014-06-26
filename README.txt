@@ -36,10 +36,12 @@ When creating a new site, provision_civicrm will detect the presence
 of CiviCRM in the platform and will install/configure it automatically.
 
 
-Running tests
--------------
+Related modules
+---------------
 
-See: http://drupal.org/project/vagrant_scripts_aegir_civicrm
+* Hosting front-end: https://www.drupal.org/project/hosting_civicrm
+* Run CiviCRM crons automatically: https://www.drupal.org/project/hosting_civicrm_cron
+* Code tests: https://drupal.org/project/vagrant_scripts_aegir_civicrm
 
 
 Support
