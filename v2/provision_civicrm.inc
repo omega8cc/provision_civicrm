@@ -439,20 +439,104 @@ function provision_civicrm_regenerate_settings() {
   $db_name = drush_get_option('db_name', NULL, 'site');
 
   // include civicrm installer helper file (otherwise PEAR DB.php will fail to include parts)
+  // FIXME : we should test whether this is still necessary.
   $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
   $crmPath = _provision_civicrm_get_package_path();
 
   $civicrmInstallerHelper = $crmPath . "/install/civicrm.php";
 
   if (! file_exists($civicrmInstallerHelper) ) {
-    drush_log(dt("CiviCRM installer helper file is missing. Not running upgrade."));
+    drush_log(dt("CiviCRM installer helper file is missing. Not running provision_civicrm_regenerate_settings()."));
     return;
   }
 
   require_once "$civicrmInstallerHelper";
-  _civicrm_generate_settings_file($db_user, $db_passwd, $db_host, $db_name, drush_get_option('civicrm_sitekey', NULL));
+
+  provision_civicrm_regenerate_settings_file($db_user, $db_passwd, $db_host, $db_name, $crmPath);
   drush_log(dt("CiviCRM: Generated config civicrm.settings.php file"), 'ok');
   drush_log(dt("CiviCRM: leaving provision_civicrm_regenerate_settings()."));
+}
+
+/**
+ * Regenerates the civicrm.settings.php file.
+ * Forked from civicrm.drush.inc's _civicrm_generate_settings_file().
+ *
+ * Modified mostly so that we can make the sitekey persist,
+ * and replaced th $modPath argument by $crmPath.
+ */
+function provision_civicrm_regenerate_settings_file($dbuser, $dbpass, $dbhost, $dbname, $crmPath) {
+  $sitekey = drush_get_option('civicrm_sitekey', NULL);
+  $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
+  $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
+  $crmPath    = _provision_civicrm_get_package_path();
+
+  $files = array(
+    "$crmPath/templates/CRM/common/civicrm.settings.php.template",
+    "$crmPath/templates/CRM/common/civicrm.settings.php.tpl"
+  );
+
+  $settingsTplFile = NULL;
+  foreach ($files as $file) {
+    if (file_exists($file)) {
+      $settingsTplFile = $file;
+    }
+  }
+
+  if (!$settingsTplFile) {
+    drush_die(dt("Could not find CiviCRM settings template and therefore could not create settings file."));
+  }
+
+  drush_log(dt("Generating civicrm settings file .."));
+  if ($baseUrl = drush_get_option('site_url', FALSE)) {
+    $ssl = drush_get_option('ssl', FALSE);
+    if ($ssl == 'on') {
+      $protocol = 'https';
+    }
+    else {
+      $protocol = 'http';
+    }
+  }
+
+  $baseUrl = !$baseUrl ? ($GLOBALS['base_url']) : ($protocol . '://' . $baseUrl);
+  $db_spec = _drush_sql_get_db_spec();
+
+  // Check version: since 4.1, Drupal6 must be used for the UF in D6
+  // The file civicrm-version.php appeared around 4.0, so it is safe to assume
+  // that if it's not there, it's 3.x, in which case the CMS 'Drupal' is D6.
+  $cms = 'Drupal';
+
+  if (file_exists("$crmPath/civicrm-version.php")) {
+    require_once "$crmPath/civicrm-version.php";
+    $v = civicrmVersion();
+    $cms = $v['cms'];
+  }
+
+  $params = array(
+    'crmRoot' => $crmPath,
+    'templateCompileDir' => "$drupalRoot/$siteRoot/files/civicrm/templates_c",
+    'frontEnd' => 0,
+    'cms' => $cms,
+    'baseURL' => $baseUrl,
+    'dbUser' => $dbuser,
+    'dbPass' => $dbpass,
+    'dbHost' => $dbhost,
+    'dbName' => $dbname,
+    'CMSdbUser' => $db_spec['username'],
+    'CMSdbPass' => $db_spec['password'],
+    'CMSdbHost' => $db_spec['host'],
+    'CMSdbName' => $db_spec['database'],
+    'siteKey' => $sitekey,
+  );
+  $str = file_get_contents($settingsTplFile);
+  foreach ($params as $key => $value) {
+    $str = str_replace('%%' . $key . '%%', $value, $str);
+  }
+  $str = trim($str);
+
+  $configFile = "$drupalRoot/$siteRoot/civicrm.settings.php";
+  civicrm_write_file($configFile, $str);
+  @drush_op('chmod', "$configFile", 0644);
+  drush_log(dt("Settings file generated: !file", array('!file' => $configFile)), 'ok');
 }
 
 function provision_civicrm_verify_common() {
