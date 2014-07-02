@@ -100,4 +100,3 @@ Todo
 * configure crons automatically (civimail, civimember) Issue #1097554
 * better support for install profiles. Issue #1309550
 * install CiviCRM when migrating from non-civi to civi platform. Issue #1127252
-* support non-english installations. Issue #1485920
