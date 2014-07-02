@@ -235,6 +235,7 @@ function _provision_civicrm_fixresourceurls() {
   $civicrm_modulepath = substr($civicrm_modulepath, strlen($drupal_basepath) + 1);
 
   // force a full URL otherwise there may be i18n issues, ex: http://example.org/en/sites/all/modules/civicrm
+  // FIXME: what about https-only sites?
   $civicrm_resourceurl = 'http://' . drush_get_option('uri') . '/' . $civicrm_modulepath;
 
   _provision_civicrm_update_option_value('userFrameworkResourceURL', $civicrm_resourceurl);
@@ -243,28 +244,18 @@ function _provision_civicrm_fixresourceurls() {
   $civicrm_imageurl = 'http://' . drush_get_option('uri') . '/sites/' . drush_get_option('uri') . '/files/civicrm/persist/contribute/';
   _provision_civicrm_update_option_value('imageUploadURL', $civicrm_imageurl);
 
-  // Since 4.1, we have settings in civicrm_settings
-  // and sometimes they are not correctly set. Brutally reset them.
-  // FIXME: do this for other variables too?
-  // merge in _provision_civicrm_fixpermissions() ?
-  // NOTE: we check dbVer, and not codeVer, because the 4.1 upgrade
-  // may not have been run yet (i.e. 4.0 -> 4.1 upgrade).
-  $dbVer = _provision_civicrm_database_version();
+  switch (drush_drupal_major_version()) {
+    case 6:
+      db_query('UPDATE {civicrm_setting} SET value = "%s" WHERE name = "%s"',
+        array('uploadDir', serialize(d()->site_path . '/files/civicrm/upload')));
+      break;
 
-  if (substr($dbVer, 0, 3) >= '4.1') {
-    switch (drush_drupal_major_version()) {
-      case 6:
-        db_query('UPDATE {civicrm_setting} SET value = "%s" WHERE name = "%s"',
-          array('uploadDir', serialize(d()->site_path . '/files/civicrm/upload')));
-        break;
-
-      case 7:
-        db_query('UPDATE {civicrm_setting} SET value = :val WHERE name = :name',
-          array(
-            ':name' => 'uploadDir',
-            ':val'  => serialize(d()->site_path . '/files/civicrm/upload')));
-        break;
-    }
+    case 7:
+      db_query('UPDATE {civicrm_setting} SET value = :val WHERE name = :name',
+        array(
+          ':name' => 'uploadDir',
+          ':val'  => serialize(d()->site_path . '/files/civicrm/upload')));
+      break;
   }
 
   drush_log(dt("CiviCRM: finished running _provision_civicrm_fixresourceurls()"));
