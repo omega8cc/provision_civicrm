@@ -97,6 +97,5 @@ Todo
   case in settings.php).
 * have a clean civicrm.drush.inc (improve upstream)  CRM-9986
 * support for installing civicrm in a different DB? Issue #1097496
-* configure crons automatically (civimail, civimember) Issue #1097554
 * better support for install profiles. Issue #1309550
 * install CiviCRM when migrating from non-civi to civi platform. Issue #1127252
