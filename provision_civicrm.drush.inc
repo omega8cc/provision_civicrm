@@ -16,15 +16,18 @@ function provision_civicrm_drush_init() {
   if (d()->type == 'site') {
     // Decide which version of our code to run based on the version of CiviCRM
     // that is installed (provision_civicrm >= 6.x-2.x)
+    // NB: this variable is fetched from the frontend, in hosting_civicrm.
     $civicrm_version = drush_get_option('civicrm_version', NULL);
     $major_version = substr($civicrm_version, 0, 3);
-    if ($major_version >= 4.2) {
-      // Other command files are automatically included from here:
-      include_once('v2/provision_civicrm.inc');
-    }
-    else {
+
+    // FIXME: in a 'migrate' operation, the civicrm_version is missing.
+    if ($major_version && $major_version < 4.2) {
       // Older civicrm, or $civicrm_version is not set in our site context
       include_once('v1/provision_civicrm.inc');
+    }
+    else {
+      // Other command files are automatically included from here:
+      include_once('v2/provision_civicrm.inc');
     }
 
     if (_provision_civicrm_is_site_context()) {
