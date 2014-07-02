@@ -31,7 +31,7 @@ function provision_civicrm_drush_init() {
     }
 
     if (_provision_civicrm_is_site_context()) {
-      // #8420965 Reset the classloader drupal variable in case we are migrating
+      // #2183083 Reset the classloader drupal variable in case we are migrating
       // from a platform to another.
       global $conf;
       $conf['civicrm_class_loader'] = NULL;
