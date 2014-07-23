@@ -796,3 +796,42 @@ function _provision_civicrm_database_version() {
   return $dbVer;
 }
 
+/**
+ * Returns the CiviCRM language (ex: fr_FR) for a Drupal language (ex: fr).
+ *
+ * Handles a few exceptions (zh_CN, af_ZA, etc) and can be overridden with a
+ * constant in your aegir global.inc of the form:
+ * PROVISION_CIVICRM_LANGUAGE_MAPPING_XX, where XX is the short language code
+ * from Drupal.
+ */
+function provision_civicrm_language_uf_to_civicrm($uf_language) {
+  if (defined('PROVISION_CIVICRM_LANGUAGE_MAPPING_' . $uf_language)) {
+    return constant('PROVISION_CIVICRM_LANGUAGE_MAPPING_' . $uf_language);
+  }
+
+  // Taken from l10n/bin/copy-to-svn.sh
+  $exceptions = array(
+    'ar' => 'ar_EG', // Arabic/Egypt
+    'af' => 'af_ZA', // Afrikaans/South Africa
+    'be' => 'be_BY', // Belarus
+    'ca' => 'ca_ES', // Catalan/Spain
+    'cs' => 'cs_CZ', // Czech
+    'da' => 'da_DK', // Danish
+    'el' => 'el_GR', // Greek
+    'et' => 'et_EE', // Estonian
+    'he' => 'he_IL', // Hebrew/Israel
+    'hi' => 'hi_IN', // Hindi
+    'ja' => 'ja_JP', // Japanese/Japan
+    'sv' => 'sv_SE', // Swedish
+    'sl' => 'sl_SI', // Slovenian
+    'sq' => 'sq_AL', // Albenian
+    'vi' => 'vi_VN', // Vietnam
+    'zh' => 'zh_CN', // Mandarin/China
+  );
+
+  if (isset($exceptions[$uf_language])) {
+    return $exceptions[$uf_language];
+  }
+
+  return $uf_language . '_' . strtoupper($uf_language);
+}
