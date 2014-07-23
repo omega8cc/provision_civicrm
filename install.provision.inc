@@ -71,16 +71,40 @@ function drush_civicrm_post_provision_install($url = null) {
         drush_log(dt("CiviCRM: installer helper file is missing, searched for @file.", array('@file' => $civicrmInstallerHelper)), 'error');
     }
 
+    // Get Drupal Language
+    $uf_language = d()->language;
+    drush_log(dt("CiviCRM: Drupal language: %lang", array('%lang' => $uf_language)));
+
+    if ($uf_language && $uf_language != 'en') {
+      $lang = provision_civicrm_language_uf_to_civicrm($uf_language);
+      drush_log(dt("CiviCRM: CiviCRM language: %lang", array('%lang' => $lang)));
+
+      // specific for 6.x-1.x
+      drush_get_option('lang', $lang);
+
+      // Check if CiviCRM translations files exist, if not English will be installation language
+      $lang .= ".";
+      if ( !file_exists($sqlPath . DIRECTORY_SEPARATOR . 'civicrm_data.' . $lang . 'mysql') ) {
+        drush_log(dt("CiviCRM: CiviCRM sql file civicrm_data." . $lang . "mysql doesn't exist. Installation will be in English", array()), 'warning');
+        unset($lang);
+      }
+      elseif ( !file_exists($sqlPath . DIRECTORY_SEPARATOR . 'civicrm_acl.' . $lang . 'mysql') ) {
+        drush_log(dt("CiviCRM: CiviCRM sql file civicrm_acl." . $lang . "mysql doesn't exist. Installation will be in English", array()), 'warning');
+        unset($lang);
+      }
+    }
+
+
     require_once "$civicrmInstallerHelper";
 
     drush_log(dt("CiviCRM: importing @sqlPath civicrm.mysql", array('@sqlPath' => $sqlPath)));
     civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm.mysql');
 
     drush_log(dt("CiviCRM: importing @sqlPath civicrm_data.mysql", array('@sqlPath' => $sqlPath)));
-    civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_data.mysql');
+    civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_data.' . $lang . 'mysql');
 
     drush_log(dt("CiviCRM: importing @sqlPath civicrm_acl.mysql", array('@sqlPath' => $sqlPath)));
-    civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_acl.mysql');
+    civicrm_source($dsn, $sqlPath . DIRECTORY_SEPARATOR . 'civicrm_acl.' . $lang . 'mysql');
 
     // Enable civicrm module before setting up civicron role,
     // as we need it to expose its permissions.
