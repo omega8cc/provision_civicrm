@@ -337,19 +337,21 @@ function _provision_civicrm_is_site_context($op = 'unknown') {
 
 /**
  * Get the path where the CiviCRM module is installed
- * Ex: /var/aegir/platforms/[...]/sites/all/modules/civicrm
+ * Ex: /var/aegir/platforms/[...]/[sites|profile]/[...]/modules/[contrib]/civicrm
+ *
+ * Ex1. /var/aegir/platforms/[...]/sites/all/modules/civicrm
+ * Ex2. /var/aegir/platforms/[...]/sites/all/modules/contrib/civicrm
+ * Ex3. /var/aegir/platforms/[...]/profiles/[..]/modules/civicrm
+ * Ex4. /var/aegir/platforms/[...]/profiles/[..]/modules/contrib/civicrm
  */
 function _provision_civicrm_get_package_path() {
   $module = _provision_civicrm_get_package_info();
 
   if ($module) {
-    $drupal_basepath = drush_get_context('DRUSH_DRUPAL_ROOT');
-    $local_civicrm_modulepath = "sites/all/modules/civicrm";
-    $crmpath = $drupal_basepath . "/" . $local_civicrm_modulepath;
-    if (file_exists($crmpath)) {
-      drush_log(dt('CiviCRM: civicrm is in @path', array('@path' => $crmpath)));
-      return $crmpath;
-    }
+    // Get the parent directory of the module, which is in civicrm/drupal/civicrm.module
+    $crmpath = dirname(dirname($module['filename']));
+    drush_log(dt('CiviCRM: civicrm is in @path', array('@path' => $crmpath)));
+    return $crmpath;
   }
 
   return FALSE;
