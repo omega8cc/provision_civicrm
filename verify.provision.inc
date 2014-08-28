@@ -78,9 +78,9 @@ function drush_civicrm_post_provision_verify($url = NULL) {
 
     drush_log(dt("CiviCRM: calling cache clear"));
 
-    if (function_exists('civicrm_drush_cache_clear')) {
+    if (function_exists('drush_civicrm_cacheclear')) {
       // CiviCRM >= 4.2
-      civicrm_drush_cache_clear();
+      drush_civicrm_cacheclear();
     }
     elseif (function_exists('civicrm_cache_clear')) {
       // CiviCRM < 4.2
