@@ -594,11 +594,19 @@ function _provision_civicrm_upgradedb() {
   }
 
   if (function_exists('drush_civicrm_upgrade_db')) {
+    ob_start();
     drush_civicrm_upgrade_db();
+    $output = ob_get_contents();
+    drush_log(dt("CiviCRM: upgrade output: !output", array('!output' => $output)), 'warning');
+    ob_end_clean();
   }
   elseif (function_exists('civicrm_upgrade_db')) {
     // CiviCRM < 4.2 ?
+    ob_start();
     civicrm_upgrade_db();
+    $output = ob_get_contents();
+    drush_log(dt("CiviCRM: upgrade output: !output", array('!output' => $output)), 'warning');
+    ob_end_clean();
   }
   else {
     drush_log(dt("CiviCRM: Could not find a drush function to upgrade CiviCRM."), 'error');
