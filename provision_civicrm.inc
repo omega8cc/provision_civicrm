@@ -219,46 +219,21 @@ function _provision_civicrm_fixpermissions() {
  * There must be a much simpler/cleaner way of doing this..
  */
 function _provision_civicrm_fixresourceurls() {
-  $civicrm_modulepath = _provision_civicrm_get_package_path();
+  drush_log(dt("CiviCRM: Running civicrm_config_update() to fix URL/path settings."));
 
-  if (! $civicrm_modulepath) {
-    drush_log(dt('CiviCRM: could not detect the path for CiviCRM. This should not happen.'), 'warning');
+  if (function_exists('drush_civicrm_update_cfg')) {
+    drush_civicrm_update_cfg_validate();
+    drush_civicrm_update_cfg();
+  }
+  elseif (function_exists('civicrm_config_update')) {
+    civicrm_config_update();
+  }
+  else {
+    drush_log(dt("CiviCRM: Could not find a drush function to update the CiviCRM url/path settings."), 'error');
     return;
   }
 
-  drush_log(dt("CiviCRM: in _provision_civicrm_fixresourceurls()"));
-
-  // ex: /var/aegir/platforms/example-civicrm-3.4.x/ (for strlen below)
-  $drupal_basepath = drush_get_context('DRUSH_DRUPAL_ROOT');
-
-  // Remove the part up until the Drupal root, so that we have only the part exposed to the web
-  $civicrm_modulepath = substr($civicrm_modulepath, strlen($drupal_basepath) + 1);
-
-  // force a full URL otherwise there may be i18n issues, ex: http://example.org/en/sites/all/modules/civicrm
-  // FIXME: what about https-only sites?
-  $civicrm_resourceurl = 'http://' . drush_get_option('uri') . '/' . $civicrm_modulepath;
-
-  _provision_civicrm_update_option_value('userFrameworkResourceURL', $civicrm_resourceurl);
-
-  // Image Upload URL
-  $civicrm_imageurl = 'http://' . drush_get_option('uri') . '/sites/' . drush_get_option('uri') . '/files/civicrm/persist/contribute/';
-  _provision_civicrm_update_option_value('imageUploadURL', $civicrm_imageurl);
-
-  switch (drush_drupal_major_version()) {
-    case 6:
-      db_query('UPDATE {civicrm_setting} SET value = "%s" WHERE name = "%s"',
-        array('uploadDir', serialize(d()->site_path . '/files/civicrm/upload')));
-      break;
-
-    case 7:
-      db_query('UPDATE {civicrm_setting} SET value = :val WHERE name = :name',
-        array(
-          ':name' => 'uploadDir',
-          ':val'  => serialize(d()->site_path . '/files/civicrm/upload')));
-      break;
-  }
-
-  drush_log(dt("CiviCRM: finished running _provision_civicrm_fixresourceurls()"));
+  drush_log(dt("CiviCRM: Finished civicrm_config_update()."));
 }
 
 /**
@@ -599,11 +574,13 @@ function _provision_civicrm_upgradedb() {
 
   drush_log(dt("CiviCRM: in _provision_civicrm_upgradedb(), _civicrm_init() worked, comparing code and schema versions."));
 
-  $_POST['upgrade'] = 1;
-  $_GET['q'] = 'civicrm/upgrade';
-
-  if (! drush_civicrm_upgrade_db_validate()) {
-    return FALSE; // above already does a drush_set_error
+  // This was added around CiviCRM >= 4.2. Use it if possible.
+  // Does a few version checks before the upgrade.
+  // FIXME: should we use drush_invoke or equivalent?
+  if (function_exists('drush_civicrm_upgrade_db_validate')) {
+    if (! drush_civicrm_upgrade_db_validate()) {
+      return FALSE; // above already does a drush_set_error
+    }
   }
 
   // Still need to check if the DB and code versions are the same
@@ -616,37 +593,16 @@ function _provision_civicrm_upgradedb() {
     return;
   }
 
-  drush_log(dt("CiviCRM: Starting with upgrade .."));
-
-  require_once( 'CRM/Upgrade/Page/Upgrade.php' );
-  require_once 'CRM/Core/Smarty.php';
-  $template =& CRM_Core_Smarty::singleton( );
-
-  if (class_exists('CRM_Upgrade_Headless')) {
-    // Note: CRM_Upgrade_Headless introduced in 4.2 -- at the same time as class auto-loading
-    $upgradeHeadless = new CRM_Upgrade_Headless();
-    $tmp = $upgradeHeadless->run(); // FIXME Exception handling?
-    $result = $tmp['message'];
+  if (function_exists('drush_civicrm_upgrade_db')) {
+    drush_civicrm_upgrade_db();
   }
-  elseif ($codeVer >= 4.1) {
-    $upgrade = new CRM_Upgrade_Page_Upgrade( );
-    $upgrade->setPrint(true);
-    ob_start(); // to suppress html output /w source code.
-    $upgrade->run( );
-    $result = $template->get_template_vars('message'); // capture the required message.
+  elseif (function_exists('civicrm_upgrade_db')) {
+    // CiviCRM < 4.2 ?
+    civicrm_upgrade_db();
   }
   else {
-    $upgrade = new CRM_Upgrade_Page_Upgrade( );
-    ob_start(); // to suppress html output /w source code.
-    $upgrade->run( );
-    $result = $template->get_template_vars('message'); // capture the required message.
-    ob_end_clean();
-  }
-
-  if (preg_match('/' . ts('CiviCRM upgrade was successful.') . '/', $result)) {
-    drush_log(dt("CiviCRM: @result", array('@result' => $result)), 'ok');
-  } else {
-    drush_log(dt("CiviCRM: upgrade failed: @result", array('@result' => $result)), 'error');
+    drush_log(dt("CiviCRM: Could not find a drush function to upgrade CiviCRM."), 'error');
+    return;
   }
 
   drush_log(dt("CiviCRM: finished _provision_civicrm_upgradedb()"));

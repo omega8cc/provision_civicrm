@@ -77,7 +77,19 @@ function drush_civicrm_post_provision_verify($url = NULL) {
     _provision_civicrm_upgradedb();
 
     drush_log(dt("CiviCRM: calling cache clear"));
-    drush_civicrm_cacheclear();
+
+    if (function_exists('civicrm_drush_cache_clear')) {
+      // CiviCRM >= 4.2
+      civicrm_drush_cache_clear();
+    }
+    elseif (function_exists('civicrm_cache_clear')) {
+      // CiviCRM < 4.2
+      civicrm_cache_clear();
+    }
+    else {
+      drush_log(dt("CiviCRM: Could not find the function to flush the cache. What version of CiviCRM are you using?"), 'warning');
+    }
+
     drush_log(dt("CiviCRM: cache clear finished"));
   }
 }
