@@ -112,6 +112,7 @@ function provision_civicrm_provision_apache_vhost_config($data = null) {
   $cividir = d()->site_path . '/files/civicrm';
   $contribdir = $cividir . '/persist/contribute';
   $customdir = $cividir . '/custom';
+  $dynamicdir = $cividir . '/dynamic';
 
   $htaccess  = 
       "<Directory \"$cividir\">\n"
@@ -123,6 +124,10 @@ function provision_civicrm_provision_apache_vhost_config($data = null) {
     . "  Allow from all\n"
     . "</Directory>\n"
     . "<Directory \"$customdir\">\n"
+    . "  Order allow,deny\n"
+    . "  Allow from all\n"
+    . "</Directory>\n"
+    . "<Directory \"$dynamicdir\">\n"
     . "  Order allow,deny\n"
     . "  Allow from all\n"
     . "</Directory>\n";
