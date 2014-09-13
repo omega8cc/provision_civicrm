@@ -152,6 +152,7 @@ function _provision_civicrm_fixpermissions() {
     '/files/civicrm/templates_c', 
     '/files/civicrm/upload',
     '/files/civicrm/persist',
+    '/files/civicrm/dynamic',
   );
 
   foreach ($civipaths as $p) {
