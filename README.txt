@@ -55,7 +55,7 @@ Commercial hosting, support and development is also possible:
 
 * Praxis Labs Coop <http://praxis.coop/> (hosting, support, dev)
 * Coop SymbioTIC <https://www.symbiotic.coop> (dev)
-* Omera8.cc <https://omega8.cc/> (hosting)
+* Omega8.cc <https://omega8.cc/> (hosting)
 * Civi-go <http://civigo.net/> (hosting, dev via Ixiam.com)
 * Koumbit <http://www.koumbit.org> (hosting)
 * Progressive Technology Project <http://www.progressivetech.org/> (hosting)
