@@ -1,17 +1,6 @@
 <?php
 
 /**
- * implementation of hook_pre_provision_install
- */
-function drush_civicrm_pre_provision_install($url = NULL) {
-  /*
-  if (d()->type == 'site') {
-    // if necessary ...
-  }
-  */
-}
-
-/**
  * implementation of hook_post_provision_install
  */
 function drush_civicrm_post_provision_install($url = null) {
