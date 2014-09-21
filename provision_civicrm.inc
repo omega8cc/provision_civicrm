@@ -6,11 +6,6 @@
  * Common functions used by install and verify.
  */
 
-include_once(dirname(__FILE__) . '/deploy.provision.inc');
-include_once(dirname(__FILE__) . '/install.provision.inc');
-include_once(dirname(__FILE__) . '/migrate.provision.inc');
-include_once(dirname(__FILE__) . '/verify.provision.inc');
-
 /**
  * Expose the service type this extension defines to provision.
  *
