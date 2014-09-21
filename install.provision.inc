@@ -3,7 +3,7 @@
 /**
  * implementation of hook_post_provision_install
  */
-function drush_civicrm_post_provision_install($url = null) {
+function drush_provision_civicrm_post_provision_install($url = null) {
   if (d()->type == 'site') {
     // Check if the CiviCRM code base is present in the platform
     // Note: after putting the code there, you must verify the platform.
@@ -20,18 +20,18 @@ function drush_civicrm_post_provision_install($url = null) {
     $db_name = drush_get_option('db_name', NULL, 'site');
 
     // Inherit the language from Drupal
-    // see provision_civicrm_language_uf_to_civicrm() for details.
+    // see _provision_civicrm_language_uf_to_civicrm() for details.
     $lang = '';
 
     $uf_language = d()->language;
     drush_log(dt("CiviCRM: Drupal language: %lang", array('%lang' => $uf_language)));
 
     if ($uf_language && $uf_language != 'en') {
-      $lang = provision_civicrm_language_uf_to_civicrm($uf_language);
+      $lang = _provision_civicrm_language_uf_to_civicrm($uf_language);
       drush_log(dt("CiviCRM: CiviCRM language: %lang", array('%lang' => $lang)));
     }
 
-    provision_civicrm_install_civicrm($db_user, $db_passwd, $db_host, $db_name, $lang);
+    _provision_civicrm_install_civicrm($db_user, $db_passwd, $db_host, $db_name, $lang);
 
     // Deprecated by hosting_civicrm_cron
     // _provision_civicrm_create_civicron_user();
@@ -59,7 +59,7 @@ function drush_civicrm_post_provision_install($url = null) {
  * Also removed the references to the tar file, since we assume that
  * the platform is already created with drush make.
  */
-function provision_civicrm_install_civicrm($dbuser, $dbpass, $dbhost, $dbname, $lang) {
+function _provision_civicrm_install_civicrm($dbuser, $dbpass, $dbhost, $dbname, $lang) {
   $crmpath    = _civicrm_get_crmpath();
   $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
   $modPath    = "$drupalRoot/$crmpath";
@@ -118,7 +118,7 @@ function provision_civicrm_install_civicrm($dbuser, $dbpass, $dbhost, $dbname, $
  * PROVISION_CIVICRM_LANGUAGE_MAPPING_XX, where XX is the short language code
  * from Drupal.
  */
-function provision_civicrm_language_uf_to_civicrm($uf_language) {
+function _provision_civicrm_language_uf_to_civicrm($uf_language) {
   if (defined('PROVISION_CIVICRM_LANGUAGE_MAPPING_' . $uf_language)) {
     return constant('PROVISION_CIVICRM_LANGUAGE_MAPPING_' . $uf_language);
   }

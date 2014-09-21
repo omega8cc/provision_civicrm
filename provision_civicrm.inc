@@ -391,7 +391,7 @@ function provision_civicrm_get_best_guess_settings() {
 /**
  * CiviCRM verify operations (used by both verify and deploy)
  */
-function provision_civicrm_regenerate_settings() {
+function _provision_civicrm_regenerate_settings() {
   drush_log(dt("CiviCRM: starting provision_civicrm_regenerate_settings()."));
 
   // Make sure to write the civicrm options
