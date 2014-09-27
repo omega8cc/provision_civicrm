@@ -15,7 +15,7 @@
  * Keep old values of paths/url so that we can later search and replace
  * in the civicrm_domain table
  */
-function drush_civicrm_pre_provision_verify($url = NULL) {
+function drush_provision_civicrm_pre_provision_verify($url = NULL) {
   if (_provision_civicrm_is_site_context()) {
     $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
     drush_set_option('civicrm_old_path', $drupalRoot);
@@ -28,7 +28,7 @@ function drush_civicrm_pre_provision_verify($url = NULL) {
 /**
  * Implements hook_provision_verify().
  */
-function drush_civicrm_provision_verify($url = NULL) {
+function drush_provision_civicrm_provision_verify($url = NULL) {
   if (! _provision_civicrm_is_site_context()) {
     return;
   }
@@ -37,7 +37,7 @@ function drush_civicrm_provision_verify($url = NULL) {
 
   // This needs to be done before we initialize CiviCRM,
   // otherwise we will load with an old include path (civicrm_root).
-  provision_civicrm_regenerate_settings();
+  _provision_civicrm_regenerate_settings();
 
   // Most importantly, get rid of the Config.IDS.ini
   _provision_civicrm_fixpermissions();
@@ -54,7 +54,7 @@ function drush_civicrm_provision_verify($url = NULL) {
  *
  * Persist civicrm settings in the drushrc.php
  */
-function drush_civicrm_post_provision_verify($url = NULL) {
+function drush_provision_civicrm_post_provision_verify($url = NULL) {
   if (! _provision_civicrm_is_site_context()) {
     return;
   }
@@ -104,7 +104,7 @@ function drush_civicrm_post_provision_verify($url = NULL) {
  * If you have custom CSS or JS to include, you should do that
  * from a Drupal module.
  */
-function provision_civicrm_provision_apache_vhost_config($data = null) {
+function drush_provision_civicrm_provision_apache_vhost_config($data = null) {
   if (! _provision_civicrm_is_site_context()) {
     return;
   }
@@ -112,6 +112,7 @@ function provision_civicrm_provision_apache_vhost_config($data = null) {
   $cividir = d()->site_path . '/files/civicrm';
   $contribdir = $cividir . '/persist/contribute';
   $customdir = $cividir . '/custom';
+  $dynamicdir = $cividir . '/dynamic';
 
   $htaccess  = 
       "<Directory \"$cividir\">\n"
@@ -125,8 +126,11 @@ function provision_civicrm_provision_apache_vhost_config($data = null) {
     . "<Directory \"$customdir\">\n"
     . "  Order allow,deny\n"
     . "  Allow from all\n"
+    . "</Directory>\n"
+    . "<Directory \"$dynamicdir\">\n"
+    . "  Order allow,deny\n"
+    . "  Allow from all\n"
     . "</Directory>\n";
 
   return $htaccess;
 }
-

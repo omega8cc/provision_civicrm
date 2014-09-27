@@ -6,11 +6,6 @@
  * Common functions used by install and verify.
  */
 
-include_once(dirname(__FILE__) . '/deploy.provision.inc');
-include_once(dirname(__FILE__) . '/install.provision.inc');
-include_once(dirname(__FILE__) . '/migrate.provision.inc');
-include_once(dirname(__FILE__) . '/verify.provision.inc');
-
 /**
  * Expose the service type this extension defines to provision.
  *
@@ -152,6 +147,7 @@ function _provision_civicrm_fixpermissions() {
     '/files/civicrm/templates_c', 
     '/files/civicrm/upload',
     '/files/civicrm/persist',
+    '/files/civicrm/custom',
   );
 
   // New in CiviCRM 4.5 (avoid warnings for CiviCRM < 4.5)
@@ -395,7 +391,7 @@ function provision_civicrm_get_best_guess_settings() {
 /**
  * CiviCRM verify operations (used by both verify and deploy)
  */
-function provision_civicrm_regenerate_settings() {
+function _provision_civicrm_regenerate_settings() {
   drush_log(dt("CiviCRM: starting provision_civicrm_regenerate_settings()."));
 
   // Make sure to write the civicrm options

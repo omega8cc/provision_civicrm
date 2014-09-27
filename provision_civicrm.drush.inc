@@ -6,7 +6,11 @@
  *   the appropriate files to handle install, verify, &c.
  */
 
-include_once('provision_civicrm.inc');
+require_once('provision_civicrm.inc');
+require_once(dirname(__FILE__) . '/deploy.provision.inc');
+require_once(dirname(__FILE__) . '/install.provision.inc');
+require_once(dirname(__FILE__) . '/migrate.provision.inc');
+require_once(dirname(__FILE__) . '/verify.provision.inc');
 
 /**
  * Implements hook_drush_init().
