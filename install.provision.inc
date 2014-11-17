@@ -7,8 +7,13 @@ function drush_provision_civicrm_post_provision_install($url = null) {
   if (d()->type == 'site') {
     // Check if the CiviCRM code base is present in the platform
     // Note: after putting the code there, you must verify the platform.
-    if (! _provision_civicrm_get_package_path()) {
-      // drush_log(dt('CiviCRM: not found in package path, skipping installation.'));
+    if ($path = _provision_civicrm_get_package_path()) {
+      // do#2364871 Workaround a BOA 2.3 issue
+      if (! function_exists('_civicrm_get_crmpath')) {
+        require_once($path . '/drupal/drush/civicrm.drush.inc');
+      }
+    }
+    else {
       return;
     }
 
