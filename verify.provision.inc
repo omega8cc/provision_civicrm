@@ -55,7 +55,7 @@ function drush_provision_civicrm_provision_verify($url = NULL) {
  * Persist civicrm settings in the drushrc.php
  */
 function drush_provision_civicrm_post_provision_verify($url = NULL) {
-  if (! _provision_civicrm_is_site_context()) {
+  if (! _provision_civicrm_is_site_context(TRUE)) {
     return;
   }
 

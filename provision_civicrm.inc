@@ -290,11 +290,14 @@ function _provision_civicrm_drush_options($op = 'unknown') {
 }
 
 /**
- * Check we are in a civicrm site context
+ * Check we are in an Aegir site context, and that CiviCRM is available in the platform.
+ *
+ * @param Boolean $load_if_missing Recommended in most cases. See do#2364871.
+ * @see _provision_civicrm_get_package_path();
  */
-function _provision_civicrm_is_site_context($op = 'unkown') {
+function _provision_civicrm_is_site_context($op = 'unkown', $load_if_missing = FALSE) {
   if (d()->type == 'site') {
-    $crmpath = _provision_civicrm_get_package_path();
+    $crmpath = _provision_civicrm_get_package_path($load_if_missing);
     return ($crmpath ? TRUE : FALSE);
   }
   return FALSE;
@@ -303,14 +306,26 @@ function _provision_civicrm_is_site_context($op = 'unkown') {
 /**
  * Get the path where the CiviCRM module is installed
  * Ex: /var/aegir/platforms/[...]/sites/all/modules/civicrm
+ *
+ * NB: if CiviCRM was not detected, verify the platform.
+ *
+ * @param Boolean $load_if_missing Recommended in most cases. See do#2364871.
  */
-function _provision_civicrm_get_package_path() {
+function _provision_civicrm_get_package_path($load_if_missing = FALSE) {
   $module = _provision_civicrm_get_package_info();
 
   if ($module) {
     // Get the parent directory of the module, which is in civicrm/drupal/civicrm.module
     $crmpath = dirname(dirname($module['filename']));
     drush_log(dt('CiviCRM: civicrm is in @path', array('@path' => $crmpath)));
+
+    // do#2364871 Workaround a BOA 2.3 issue
+    // When civicrm is in an install profile, the civicrm drush module does not get loaded.
+    if ($load_if_missing && ! function_exists('_civicrm_get_crmpath')) {
+      drush_log(dt('CiviCRM: loading file: civicrm.drush.inc.'));
+      require_once($path . '/drupal/drush/civicrm.drush.inc');
+    }
+
     return $crmpath;
   }
 

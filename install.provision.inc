@@ -4,51 +4,41 @@
  * implementation of hook_post_provision_install
  */
 function drush_provision_civicrm_post_provision_install($url = null) {
-  if (d()->type == 'site') {
-    // Check if the CiviCRM code base is present in the platform
-    // Note: after putting the code there, you must verify the platform.
-    if ($path = _provision_civicrm_get_package_path()) {
-      // do#2364871 Workaround a BOA 2.3 issue
-      if (! function_exists('_civicrm_get_crmpath')) {
-        require_once($path . '/drupal/drush/civicrm.drush.inc');
-      }
-    }
-    else {
-      return;
-    }
-
-    drush_log(dt("CiviCRM: Starting installation..."));
-
-    $db_user = drush_get_option('db_user', NULL, 'site');
-    $db_passwd = drush_get_option('db_passwd', NULL, 'site');
-    $db_host = drush_get_option('db_host', NULL, 'site');
-    $db_name = drush_get_option('db_name', NULL, 'site');
-
-    // Inherit the language from Drupal
-    // see _provision_civicrm_language_uf_to_civicrm() for details.
-    $lang = '';
-
-    $uf_language = d()->language;
-    drush_log(dt("CiviCRM: Drupal language: %lang", array('%lang' => $uf_language)));
-
-    if ($uf_language && $uf_language != 'en') {
-      $lang = _provision_civicrm_language_uf_to_civicrm($uf_language);
-      drush_log(dt("CiviCRM: CiviCRM language: %lang", array('%lang' => $lang)));
-    }
-
-    _provision_civicrm_install_civicrm($db_user, $db_passwd, $db_host, $db_name, $lang);
-
-    // Deprecated by hosting_civicrm_cron
-    // _provision_civicrm_create_civicron_user();
-
-    // Fix some paths (not really necessary since 4.x, works fine after install).
-    // _provision_civicrm_fixresourceurls();
-
-    // Make sure the template_c and uploads have the correct permissions
-    _provision_civicrm_fixpermissions();
-
-    drush_log(dt("CiviCRM: Installation complete!"), 'ok');
+  if (! _provision_civicrm_is_site_context(TRUE)) {
+    return;
   }
+
+  drush_log(dt("CiviCRM: Starting installation..."));
+
+  $db_user = drush_get_option('db_user', NULL, 'site');
+  $db_passwd = drush_get_option('db_passwd', NULL, 'site');
+  $db_host = drush_get_option('db_host', NULL, 'site');
+  $db_name = drush_get_option('db_name', NULL, 'site');
+
+  // Inherit the language from Drupal
+  // see _provision_civicrm_language_uf_to_civicrm() for details.
+  $lang = '';
+
+  $uf_language = d()->language;
+  drush_log(dt("CiviCRM: Drupal language: %lang", array('%lang' => $uf_language)));
+
+  if ($uf_language && $uf_language != 'en') {
+    $lang = _provision_civicrm_language_uf_to_civicrm($uf_language);
+    drush_log(dt("CiviCRM: CiviCRM language: %lang", array('%lang' => $lang)));
+  }
+
+  _provision_civicrm_install_civicrm($db_user, $db_passwd, $db_host, $db_name, $lang);
+
+  // Deprecated by hosting_civicrm_cron
+  // _provision_civicrm_create_civicron_user();
+
+  // Fix some paths (not really necessary since 4.x, works fine after install).
+  // _provision_civicrm_fixresourceurls();
+
+  // Make sure the template_c and uploads have the correct permissions
+  _provision_civicrm_fixpermissions();
+
+  drush_log(dt("CiviCRM: Installation complete!"), 'ok');
 }
 
 /**

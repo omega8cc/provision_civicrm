@@ -28,6 +28,10 @@ function drush_provision_civicrm_pre_provision_deploy($url = NULL) {
  * Implements hook_provision_deploy().
  */
 function drush_provision_civicrm_provision_deploy() {
+  if (! _provision_civicrm_is_site_context(TRUE)) {
+    return;
+  }
+
   // This needs to be done before we initialize CiviCRM,
   // otherwise we will load with an old include path (civicrm_root).
   //
@@ -41,25 +45,33 @@ function drush_provision_civicrm_provision_deploy() {
  * Implements hook_post_provision_deploy().
  */
 function drush_provision_civicrm_post_provision_deploy() {
-/* c.f. #1696730 */
-/*
-  if (! _provision_civicrm_is_site_context()) {
+  if (! _provision_civicrm_is_site_context(TRUE)) {
     return;
   }
 
-  if (! drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_FULL)) {
+  // Do not check blocked_ips, otherwise it will crash when doing an
+  // upgrade from drupal6 to drupal7. We need to bootstrap in order to
+  // delete the civicrm_class_loader variable.
+  global $conf;
+  $conf['blocked_ips'] = array();
+
+  if (! drush_bootstrap(DRUSH_BOOTSTRAP_DRUPAL_DATABASE)) {
     drush_log(dt("CiviCRM: failed to bootstrap Drupal for deploy."));
     return;
   }
 
   drush_log(dt("CiviCRM: Running drush_civicrm_post_provision_deploy"));
+  drush_variable_delete('civicrm_class_loader');
+  drush_log(dt("CiviCRM: Finished drush_civicrm_post_provision_deploy"));
 
+/* c.f. #1696730 */
+/*
   // verify might return fail if, for example, this is a very old version of CiviCRM
   // in which case, no point continuing with the upgrade and cache clear.
   if (provision_civicrm_verify_common()) {
     // Run the CiviCRM upgrade procedure
     _provision_civicrm_upgradedb();
-  
+
     // May not be necessary..
     drush_log(dt("CiviCRM: calling cache clear 02"));
     drush_civicrm_cacheclear();
