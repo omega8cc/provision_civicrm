@@ -323,7 +323,7 @@ function _provision_civicrm_get_package_path($load_if_missing = FALSE) {
     // When civicrm is in an install profile, the civicrm drush module does not get loaded.
     if ($load_if_missing && ! function_exists('_civicrm_get_crmpath')) {
       drush_log(dt('CiviCRM: loading file: civicrm.drush.inc.'));
-      require_once($path . '/drupal/drush/civicrm.drush.inc');
+      require_once($crmpath . '/drupal/drush/civicrm.drush.inc');
     }
 
     return $crmpath;
