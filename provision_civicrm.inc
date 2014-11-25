@@ -295,7 +295,7 @@ function _provision_civicrm_drush_options($op = 'unknown') {
  * @param Boolean $load_if_missing Recommended in most cases. See do#2364871.
  * @see _provision_civicrm_get_package_path();
  */
-function _provision_civicrm_is_site_context($op = 'unkown', $load_if_missing = FALSE) {
+function _provision_civicrm_is_site_context($load_if_missing = FALSE) {
   if (d()->type == 'site') {
     $crmpath = _provision_civicrm_get_package_path($load_if_missing);
     return ($crmpath ? TRUE : FALSE);
