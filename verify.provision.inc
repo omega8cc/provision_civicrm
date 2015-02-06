@@ -104,7 +104,7 @@ function drush_provision_civicrm_post_provision_verify($url = NULL) {
  * If you have custom CSS or JS to include, you should do that
  * from a Drupal module.
  */
-function drush_provision_civicrm_provision_apache_vhost_config($data = null) {
+function provision_civicrm_provision_apache_vhost_config($data = null) {
   if (! _provision_civicrm_is_site_context()) {
     return;
   }
