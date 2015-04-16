@@ -83,7 +83,7 @@ function _provision_civicrm_install_civicrm($dbuser, $dbpass, $dbhost, $dbname, 
 
   // Generate civicrm.settings.php file
   drush_log(dt("CiviCRM: Generating the CiviCRM settings file."));
-  _civicrm_generate_settings_file($dbuser, $dbpass, $dbhost, $dbname, $crmPath . '/../');
+  _civicrm_generate_settings_file($dbuser, $dbpass, $dbhost, $dbname, $modPath);
 
   drush_log(dt("CiviCRM: Enabling the CiviCRM module."));
   module_enable(array('civicrm'));
