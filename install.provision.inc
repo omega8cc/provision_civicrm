@@ -55,39 +55,35 @@ function drush_provision_civicrm_post_provision_install($url = null) {
  * the platform is already created with drush make.
  */
 function _provision_civicrm_install_civicrm($dbuser, $dbpass, $dbhost, $dbname, $lang) {
-  $crmpath    = _civicrm_get_crmpath();
-  $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
-  $modPath    = "$drupalRoot/$crmpath";
+  // Various civicrm.drush.inc functions expect the $crmPath to be set.
+  global $crmPath;
+  $crmPath = _provision_civicrm_get_package_path();
 
-  $civiPath = _provision_civicrm_get_package_path();
-  $sitePath = drush_get_context('DRUSH_DRUPAL_ROOT');
+  drush_log('DRUSH_DRUPAL_ROOT: ' . drush_get_context('DRUSH_DRUPAL_ROOT'), 'ok');
+  drush_log('DRUSH_SITE_ROOT: ' . drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE), 'ok');
 
-  // include civicrm installer helper file
-  $civicrmInstallerHelper = $civiPath . "/install/civicrm.php";
+  // Include civicrm installer helper file
+  $civicrmInstallerHelper = $crmPath . "/install/civicrm.php";
 
   if (!file_exists($civicrmInstallerHelper)) {
     return drush_set_error('CIVICRM_NOT_PRESENT', dt("CiviCRM installer helper file is missing."));
   }
 
-  // setup all required files/civicrm/* directories
-  if (!_civicrm_create_files_dirs($civicrmInstallerHelper, $sitePath)) {
+  // NB: civicrm drush functions expect the parent dir of the civicrm code base.
+  $modPath = $crmPath . '/../';
+
+  // Setup all required files/civicrm/* directories
+  if (!_civicrm_create_files_dirs($civicrmInstallerHelper, $modPath)) {
     return FALSE;
   }
 
-  // install database
-  // FIXME: the use of $crmPath is very weird. It's necessary for civicrm_source(),
-  // which is called from _civicrm_install_db(). Needs refactoring!
-  global $crmPath;
-  $crmPath = $civiPath;
-
-  // NB: rather silly, but this function expects the parent dir
-  // of where the civicrm code base is located.
+  // Install the database
   drush_log(dt("CiviCRM: Initializing the CiviCRM database."));
-  _civicrm_install_db($dbuser, $dbpass, $dbhost, $dbname, $civiPath . '/../', $lang);
+  _civicrm_install_db($dbuser, $dbpass, $dbhost, $dbname, $modPath, $lang);
 
-  // generate civicrm.settings.php file
+  // Generate civicrm.settings.php file
   drush_log(dt("CiviCRM: Generating the CiviCRM settings file."));
-  _civicrm_generate_settings_file($dbuser, $dbpass, $dbhost, $dbname, $civiPath . '/../');
+  _civicrm_generate_settings_file($dbuser, $dbpass, $dbhost, $dbname, $crmPath . '/../');
 
   drush_log(dt("CiviCRM: Enabling the CiviCRM module."));
   module_enable(array('civicrm'));
