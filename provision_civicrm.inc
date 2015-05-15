@@ -415,6 +415,16 @@ function _provision_civicrm_regenerate_settings() {
     drush_set_option($opt, $val, 'site');
   }
 
+  // Since we do not have an upgrade path for existing site key (before it
+  // was added to the frontend), be nice about an empty sitekey.
+  if (d()->civicrm_sitekey) {
+    drush_log('CiviCRM: found a site key from the front-end.', 'ok');
+    drush_set_option('civicrm_sitekey', d()->civicrm_sitekey);
+  }
+  else {
+    drush_log('CiviCRM: no site key found from the front-end.');
+  }
+
   $db_user = drush_get_option('db_user', NULL, 'site');
   $db_passwd = drush_get_option('db_passwd', NULL, 'site');
   $db_host = drush_get_option('db_host', NULL, 'site');

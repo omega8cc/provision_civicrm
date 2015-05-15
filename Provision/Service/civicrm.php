@@ -10,6 +10,9 @@ class Provision_Service_civicrm extends Provision_Service {
    * Add the civicrm_version property to the site context.
    */
   static function subscribe_site($context) {
+    $context->setProperty('civicrm_sitekey');
+
+    // Not used?
     $context->setProperty('civicrm_version');
   }
 }
