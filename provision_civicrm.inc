@@ -457,7 +457,7 @@ function _provision_civicrm_regenerate_settings() {
  * and replaced th $modPath argument by $crmPath.
  */
 function provision_civicrm_regenerate_settings_file($dbuser, $dbpass, $dbhost, $dbname, $crmPath) {
-  $sitekey = drush_get_option('civicrm_sitekey', NULL);
+  $sitekey = d()->civicrm_sitekey;
   $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
   $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
   $crmPath    = _provision_civicrm_get_package_path();
