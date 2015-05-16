@@ -479,7 +479,7 @@ function provision_civicrm_regenerate_settings_file($dbuser, $dbpass, $dbhost, $
   }
 
   drush_log(dt("Generating civicrm settings file .."));
-  if ($baseUrl = drush_get_option('site_url', FALSE)) {
+  if ($baseUrl = d()->uri) {
     $ssl = drush_get_option('ssl', FALSE);
     if ($ssl == 'on') {
       $protocol = 'https';
