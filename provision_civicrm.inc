@@ -458,8 +458,8 @@ function _provision_civicrm_regenerate_settings() {
  */
 function provision_civicrm_regenerate_settings_file($dbuser, $dbpass, $dbhost, $dbname, $crmPath) {
   $sitekey = d()->civicrm_sitekey;
-  $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
-  $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
+  $drupalRoot = d()->root;
+  $siteRoot   = d()->site_path;
   $crmPath    = _provision_civicrm_get_package_path();
 
   $files = array(
@@ -478,18 +478,10 @@ function provision_civicrm_regenerate_settings_file($dbuser, $dbpass, $dbhost, $
     drush_die(dt("Could not find CiviCRM settings template and therefore could not create settings file."));
   }
 
-  drush_log(dt("Generating civicrm settings file .."));
-  if ($baseUrl = drush_get_option('site_url', FALSE)) {
-    $ssl = drush_get_option('ssl', FALSE);
-    if ($ssl == 'on') {
-      $protocol = 'https';
-    }
-    else {
-      $protocol = 'http';
-    }
-  }
+  drush_log(dt("CiviCRM: Generating the settings file .."), 'ok');
 
-  $baseUrl = !$baseUrl ? ($GLOBALS['base_url']) : ($protocol . '://' . $baseUrl);
+  $protocol = (d()->ssl_enabled > 0 ? 'https' : 'http');
+  $baseUrl = $protocol . '://' . d()->uri;
   $drush_major_version = substr(DRUSH_VERSION, 0, 1);
 
   // #2411137 NB: this tests the Drush version, not Drupal.
@@ -519,7 +511,7 @@ function provision_civicrm_regenerate_settings_file($dbuser, $dbpass, $dbhost, $
 
   $params = array(
     'crmRoot' => $crmPath,
-    'templateCompileDir' => "$drupalRoot/$siteRoot/files/civicrm/templates_c",
+    'templateCompileDir' => "$siteRoot/files/civicrm/templates_c",
     'frontEnd' => 0,
     'cms' => $cms,
     'baseURL' => $baseUrl,
@@ -539,7 +531,7 @@ function provision_civicrm_regenerate_settings_file($dbuser, $dbpass, $dbhost, $
   }
   $str = trim($str);
 
-  $configFile = "$drupalRoot/$siteRoot/civicrm.settings.php";
+  $configFile = "$siteRoot/civicrm.settings.php";
   civicrm_write_file($configFile, $str);
   @drush_op('chmod', "$configFile", 0644);
   drush_log(dt("Settings file generated: !file", array('!file' => $configFile)), 'ok');
