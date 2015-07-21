@@ -148,6 +148,7 @@ function _provision_civicrm_fixpermissions() {
     '/files/civicrm/upload',
     '/files/civicrm/persist',
     '/files/civicrm/custom',
+    '/files/civicrm/ConfigAndLog',
   );
 
   // New in CiviCRM 4.5 (avoid warnings for CiviCRM < 4.5)
