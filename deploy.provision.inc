@@ -63,25 +63,4 @@ function drush_provision_civicrm_post_provision_deploy() {
   drush_log(dt("CiviCRM: Running drush_civicrm_post_provision_deploy"));
   drush_variable_delete('civicrm_class_loader');
   drush_log(dt("CiviCRM: Finished drush_civicrm_post_provision_deploy"));
-
-/* c.f. #1696730 */
-/*
-  // verify might return fail if, for example, this is a very old version of CiviCRM
-  // in which case, no point continuing with the upgrade and cache clear.
-  if (provision_civicrm_verify_common()) {
-    // Run the CiviCRM upgrade procedure
-    _provision_civicrm_upgradedb();
-
-    // May not be necessary..
-    drush_log(dt("CiviCRM: calling cache clear 02"));
-    drush_civicrm_cacheclear();
-    drush_log(dt("CiviCRM: cache clear finished"));
-  }
-
-  // Verify will run later on and do fixpermissions and cache clear
-  // so we won't do it again here. However, people running a deploy
-  // manually (from the command line) will have to also run verify after.
-
-  drush_log(dt("CiviCRM: Finished drush_civicrm_post_provision_deploy"));
-*/
 }

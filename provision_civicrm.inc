@@ -148,6 +148,7 @@ function _provision_civicrm_fixpermissions() {
     '/files/civicrm/upload',
     '/files/civicrm/persist',
     '/files/civicrm/custom',
+    '/files/civicrm/ConfigAndLog',
   );
 
   // New in CiviCRM 4.5 (avoid warnings for CiviCRM < 4.5)
@@ -314,7 +315,7 @@ function _provision_civicrm_is_site_context($load_if_missing = FALSE) {
 function _provision_civicrm_get_package_path($load_if_missing = FALSE) {
   $module = _provision_civicrm_get_package_info();
 
-  if ($module && $module != NULL) {
+  if ($module) {
     // Get the parent directory of the module, which is in civicrm/drupal/civicrm.module
     $crmpath = dirname(dirname($module['filename']));
     drush_log(dt('CiviCRM: civicrm is in @path', array('@path' => $crmpath)));
@@ -322,10 +323,8 @@ function _provision_civicrm_get_package_path($load_if_missing = FALSE) {
     // do#2364871 Workaround a BOA 2.3 issue
     // When civicrm is in an install profile, the civicrm drush module does not get loaded.
     if ($load_if_missing && ! function_exists('_civicrm_get_crmpath')) {
-      if (provision_file()->exists($crmpath . '/drupal/drush/civicrm.drush.inc')->status()) {
-        drush_log(dt('CiviCRM: loading file: civicrm.drush.inc.'));
-        require_once($crmpath . '/drupal/drush/civicrm.drush.inc');
-      }
+      drush_log(dt('CiviCRM: loading file: civicrm.drush.inc.'));
+      require_once($crmpath . '/drupal/drush/civicrm.drush.inc');
     }
 
     return $crmpath;
@@ -347,16 +346,8 @@ function _provision_civicrm_get_package_info() {
   $profile = drush_get_option('profile', NULL);
 
   if (isset($packages['modules']) && isset($packages['modules']['civicrm'])) {
-    $test_module = $packages['modules']['civicrm'];
-    $test_crmpath = dirname(dirname($test_module['filename']));
-    if (preg_match("/\/static$/", $test_crmpath)) {
-      drush_log(dt('CiviCRM: reported in packages with invalid path @path - ignored', array('@path' => $test_crmpath)));
-      $module = NULL;
-    }
-    else {
-      drush_log(dt('CiviCRM: found civicrm in packages'));
-      $module = $packages['modules']['civicrm'];
-    }
+    drush_log(dt('CiviCRM: found civicrm in packages'));
+    $module = $packages['modules']['civicrm'];
   }
   elseif (isset($packages['sites-all']) && isset($packages['sites-all']['modules']) && isset($packages['sites-all']['modules']['civicrm'])) {
     $module = $packages['sites-all']['modules']['civicrm'];
@@ -371,7 +362,6 @@ function _provision_civicrm_get_package_info() {
     drush_log(dt('CiviCRM: found civicrm in packages of @profile profile modules', array('@profile' => $profile)));
   }
   else {
-    $module = NULL;
     // drush_log(dt('CiviCRM: civicrm not found in packages ' . print_r($packages, 1)));
   }
 
@@ -468,9 +458,9 @@ function _provision_civicrm_regenerate_settings() {
  * and replaced th $modPath argument by $crmPath.
  */
 function provision_civicrm_regenerate_settings_file($dbuser, $dbpass, $dbhost, $dbname, $crmPath) {
-  $sitekey = drush_get_option('civicrm_sitekey', NULL);
-  $drupalRoot = drush_get_context('DRUSH_DRUPAL_ROOT');
-  $siteRoot   = drush_get_context('DRUSH_DRUPAL_SITE_ROOT', FALSE);
+  $sitekey = d()->civicrm_sitekey;
+  $drupalRoot = d()->root;
+  $siteRoot   = d()->site_path;
   $crmPath    = _provision_civicrm_get_package_path();
 
   $files = array(
@@ -489,18 +479,10 @@ function provision_civicrm_regenerate_settings_file($dbuser, $dbpass, $dbhost, $
     drush_die(dt("Could not find CiviCRM settings template and therefore could not create settings file."));
   }
 
-  drush_log(dt("Generating civicrm settings file .."));
-  if ($baseUrl = d()->uri) {
-    $ssl = drush_get_option('ssl', FALSE);
-    if ($ssl == 'on') {
-      $protocol = 'https';
-    }
-    else {
-      $protocol = 'http';
-    }
-  }
+  drush_log(dt("CiviCRM: Generating the settings file .."), 'ok');
 
-  $baseUrl = !$baseUrl ? ($GLOBALS['base_url']) : ($protocol . '://' . $baseUrl);
+  $protocol = (d()->ssl_enabled > 0 ? 'https' : 'http');
+  $baseUrl = $protocol . '://' . d()->uri;
   $drush_major_version = substr(DRUSH_VERSION, 0, 1);
 
   // #2411137 NB: this tests the Drush version, not Drupal.
@@ -530,7 +512,7 @@ function provision_civicrm_regenerate_settings_file($dbuser, $dbpass, $dbhost, $
 
   $params = array(
     'crmRoot' => $crmPath,
-    'templateCompileDir' => "$drupalRoot/$siteRoot/files/civicrm/templates_c",
+    'templateCompileDir' => "$siteRoot/files/civicrm/templates_c",
     'frontEnd' => 0,
     'cms' => $cms,
     'baseURL' => $baseUrl,
@@ -550,7 +532,7 @@ function provision_civicrm_regenerate_settings_file($dbuser, $dbpass, $dbhost, $
   }
   $str = trim($str);
 
-  $configFile = "$drupalRoot/$siteRoot/civicrm.settings.php";
+  $configFile = "$siteRoot/civicrm.settings.php";
   civicrm_write_file($configFile, $str);
   @drush_op('chmod', "$configFile", 0644);
   drush_log(dt("Settings file generated: !file", array('!file' => $configFile)), 'ok');
