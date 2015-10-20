@@ -350,7 +350,7 @@ function _provision_civicrm_get_package_info() {
   if (isset($packages['modules']) && isset($packages['modules']['civicrm'])) {
     $test_module = $packages['modules']['civicrm'];
     $test_crmpath = dirname(dirname($test_module['filename']));
-    if (preg_match("/\/static$/", $test_crmpath)) {
+    if (preg_match("/\/(static|distro)$/", $test_crmpath)) {
       drush_log(dt('CiviCRM: reported in packages with invalid path @path - ignored', array('@path' => $test_crmpath)));
       $module = NULL;
     }
